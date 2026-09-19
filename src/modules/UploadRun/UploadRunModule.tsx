@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { BadgeCheck, Clock3, Rows3, Upload } from "lucide-react";
+import { BadgeCheck, Clock3 } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import type { PreviewTable } from "@/types/native";
 
@@ -9,6 +9,8 @@ export function UploadRunModule() {
   const [activePreviewFile, setActivePreviewFile] = useState("");
   const [previewError, setPreviewError] = useState("");
   const { selectedFiles, preview, previewFile, setSelectedFiles, setPreview } = useAppStore();
+  const activePreview = previewFile === activePreviewFile ? preview : null;
+  const showPreview = Boolean(previewError || activePreview?.rows.length);
 
   function basename(path: string) {
     return path.split(/[/\\]/).pop() || path;
@@ -78,6 +80,9 @@ export function UploadRunModule() {
     let cancelled = false;
 
     async function loadPreview() {
+      setPreview(null, activeFile);
+      setPreviewError("");
+
       try {
         const result = await invoke<PreviewTable>("read_delimited_preview", {
           path: activeFile,
@@ -104,18 +109,19 @@ export function UploadRunModule() {
   }, [activePreviewFile, setPreview]);
 
   return (
-    <section className="module-page">
-      <div className="module-page__hero">
-        <h1>Upload / Run</h1>
-        <p>
-          Stage shared BED inputs for the RNAmeta desktop session.
-        </p>
+    <section className="module-page upload-run-page">
+      <div className="module-page__hero upload-run-hero">
+        <div className="module-page__hero-copy">
+          <span className="upload-run-hero__context">BED input workspace</span>
+          <h1>Upload / Run</h1>
+          <p>Select BED files, review their first rows, and prepare them for analysis modules.</p>
+        </div>
       </div>
 
       <div className="upload-panel-stack">
         <UploadFieldCard
-          title="BED Collection"
-          description="Attach the BED files that will seed this desktop session."
+          title="BED collection"
+          description="Select one or more BED files to use across the analysis modules."
           filename={activePreviewFile || "No BED file selected yet"}
           status={selectedFiles.length > 0 ? "ready" : "waiting"}
           actionLabel={selectedFiles.length > 0 ? "Replace BED files" : "Choose BED files"}
@@ -136,7 +142,11 @@ export function UploadRunModule() {
                       key={filePath}
                       type="button"
                       className={`selected-file-chip${isActive ? " is-active" : ""}`}
-                      onClick={() => setActivePreviewFile(filePath)}
+                      onClick={() => {
+                        setPreview(null, filePath);
+                        setPreviewError("");
+                        setActivePreviewFile(filePath);
+                      }}
                     >
                       <span>{basename(filePath)}</span>
                     </button>
@@ -147,52 +157,47 @@ export function UploadRunModule() {
           ) : null}
         </UploadFieldCard>
 
-        <section className="config-card">
-          <div className="config-card__head">
-            <div className="config-card__icon">
-              <Rows3 size={18} />
-            </div>
+        <section
+          className={`config-card upload-preview-card${
+            showPreview ? "" : " upload-preview-card--pending"
+          }`}
+        >
+          <div className="config-card__head upload-preview-card__head">
             <div>
-              <h3>Preview Table</h3>
-              <p>Show the first 10 rows of the currently selected BED file.</p>
+              <h3>Preview table</h3>
             </div>
           </div>
 
-          <div className="table-shell">
-            {previewError ? (
-              <div className="table-shell__empty">Failed to read preview: {previewError}</div>
-            ) : preview && preview.rows.length > 0 ? (
-              <div className="preview-table-wrap">
-                <div className="preview-table-wrap__meta">
-                  <span>Source</span>
-                  <strong>{previewFile || preview.sourcePath}</strong>
-                </div>
-
-                <div className="preview-table-scroll">
-                  <table className="preview-table">
-                    <thead>
-                      <tr>
-                        {preview.headers.map((header) => (
-                          <th key={header}>{header}</th>
+          {showPreview ? (
+            previewError ? (
+              <div className="table-shell">
+                <div className="table-shell__empty">Failed to read preview: {previewError}</div>
+              </div>
+            ) : activePreview ? (
+              <div className="browser-transcript-table-wrap">
+                <table className="browser-transcript-table">
+                  <thead>
+                    <tr>
+                      {activePreview.headers.map((header) => (
+                        <th key={header}>{header}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activePreview.rows.map((row, rowIndex) => (
+                      <tr key={`${activePreview.sourcePath}-${rowIndex}`}>
+                        {row.map((cell, cellIndex) => (
+                          <td key={`${activePreview.sourcePath}-${rowIndex}-${cellIndex}`}>
+                            {cell}
+                          </td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {preview.rows.map((row, rowIndex) => (
-                        <tr key={`${preview.sourcePath}-${rowIndex}`}>
-                          {row.map((cell, cellIndex) => (
-                            <td key={`${preview.sourcePath}-${rowIndex}-${cellIndex}`}>{cell}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ) : (
-              <div className="table-shell__empty">Select a BED file to preview the first 10 rows.</div>
-            )}
-          </div>
+            ) : null
+          ) : null}
         </section>
       </div>
     </section>
@@ -242,7 +247,6 @@ function UploadFieldCard({
           className="path-row__button upload-secondary-button"
           onClick={onAction}
         >
-          <Upload size={14} />
           {actionLabel}
         </button>
       </div>

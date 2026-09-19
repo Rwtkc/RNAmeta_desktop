@@ -1,15 +1,21 @@
-import { invoke } from "@tauri-apps/api/core";
-import { Child, Command, SpawnOptions } from "@tauri-apps/plugin-shell";
+import { Channel, invoke } from "@tauri-apps/api/core";
 import { useLogStore } from "@/store/useLogStore";
 
-const activeChildren = new Map<Child, (reason: Error) => void>();
+const activeChildren = new Map<number, (reason: Error) => void>();
 const abortedPids = new Set<number>();
+
+type REngineEvent =
+  | { event: "stdout"; line: string }
+  | { event: "stderr"; line: string }
+  | { event: "close"; code: number | null }
+  | { event: "error"; message: string };
 
 interface RunShellOptions {
   cwd?: string;
   env?: Record<string, string>;
   encoding?: string;
   label?: string;
+  showConsole?: boolean;
   onStdout?: (line: string) => void;
   onStderr?: (line: string) => void;
   captureOutput?: boolean;
@@ -26,14 +32,11 @@ export const abortAnalysis = async () => {
   activeChildren.clear();
 
   await Promise.all(
-    children.map(async ([child, rejecter]) => {
-      abortedPids.add(child.pid);
+    children.map(async ([pid, rejecter]) => {
+      abortedPids.add(pid);
       rejecter(new Error("Aborted"));
-      await Promise.all([
-        invoke("terminate_process_tree", { pid: child.pid }).catch(() => null),
-        child.kill().catch(() => null)
-      ]);
-      abortedPids.delete(child.pid);
+      await invoke("terminate_process_tree", { pid }).catch(() => null);
+      abortedPids.delete(pid);
     })
   );
 };
@@ -43,8 +46,7 @@ export function useRAnalysis() {
     activeProcessCount,
     addLog,
     incrementProcess,
-    decrementProcess,
-    setExpanded
+    decrementProcess
   } = useLogStore();
   const isRunning = activeProcessCount > 0;
 
@@ -53,77 +55,60 @@ export function useRAnalysis() {
     args: string[] = [],
     options: RunShellOptions = {}
   ) {
-    const spawnOptions: SpawnOptions = {};
-    if (options.cwd) spawnOptions.cwd = options.cwd;
-    if (options.env) spawnOptions.env = options.env;
-    if (options.encoding) spawnOptions.encoding = options.encoding;
-
-    const command = Command.create(commandName, args, spawnOptions);
+    if (commandName !== "r-engine") {
+      throw new Error(`Unsupported native analysis command: ${commandName}`);
+    }
+    const env = {
+        LANG: "Chinese (Simplified)_China.utf8",
+        LC_ALL: "Chinese (Simplified)_China.utf8",
+        ...options.env
+    };
     incrementProcess();
-    setExpanded(true);
     addLog("command", `[Engine] Dispatching ${options.label ?? commandName}`);
 
     return new Promise<void>(async (resolve, reject) => {
-      let childInstance: Child | null = null;
+      let childPid: number | null = null;
       let finished = false;
 
       const done = (error?: Error) => {
         if (finished) return;
         finished = true;
-        if (childInstance) {
-          activeChildren.delete(childInstance);
+        if (childPid !== null) {
+          activeChildren.delete(childPid);
         }
-        decrementProcess();
-        if (useLogStore.getState().activeProcessCount === 0) {
-          setExpanded(false);
-        }
+        decrementProcess(Boolean(error));
         if (error) reject(error);
         else resolve();
       };
 
-      command.stdout.on("data", (line) => {
-        if (childInstance && abortedPids.has(childInstance.pid)) return;
-        if (options.captureOutput !== false) {
-          addLog("info", `[stdout] ${line}`);
+      const onEvent = new Channel<REngineEvent>();
+      onEvent.onmessage = (event) => {
+        if (childPid !== null && abortedPids.has(childPid)) return;
+        if (event.event === "stdout") {
+          if (options.captureOutput !== false) addLog("info", `[stdout] ${event.line}`);
+          options.onStdout?.(event.line);
+        } else if (event.event === "stderr") {
+          if (options.captureOutput !== false) {
+            const normalized = event.line.toLowerCase();
+            addLog(normalized.includes("error") || normalized.includes("failed") ? "error" : "info", `[stderr] ${event.line}`);
+          }
+          options.onStderr?.(event.line);
+        } else if (event.event === "close") {
+          if (event.code === 0) done();
+          else done(new Error(`Exit code ${event.code ?? "unknown"}`));
+        } else {
+          done(new Error(event.message));
         }
-        options.onStdout?.(line);
-      });
-
-      command.stderr.on("data", (line) => {
-        if (childInstance && abortedPids.has(childInstance.pid)) return;
-        if (options.captureOutput !== false) {
-          const normalized = line.toLowerCase();
-          addLog(
-            normalized.includes("error") || normalized.includes("failed")
-              ? "error"
-              : "info",
-            `[stderr] ${line}`
-          );
-        }
-        options.onStderr?.(line);
-      });
-
-      command.on("error", (error) => {
-        const text = String(error);
-        if (text.toLowerCase().includes("invalid utf-8 sequence")) {
-          addLog("info", "[Engine] Skipped a non-UTF8 output chunk.");
-          return;
-        }
-        done(new Error(text));
-      });
-
-      command.on("close", (data) => {
-        if (childInstance && abortedPids.has(childInstance.pid)) {
-          done(new Error("Aborted"));
-          return;
-        }
-        if (data.code === 0) done();
-        else done(new Error(`Exit code ${data.code}`));
-      });
+      };
 
       try {
-        childInstance = await command.spawn();
-        activeChildren.set(childInstance, (reason) => done(reason));
+        childPid = await invoke<number>("spawn_r_engine", {
+          args,
+          cwd: options.cwd ?? null,
+          env,
+          onEvent
+        });
+        if (!finished) activeChildren.set(childPid, (reason) => done(reason));
       } catch (error) {
         done(error instanceof Error ? error : new Error(String(error)));
       }

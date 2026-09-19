@@ -241,7 +241,7 @@ export function GeneMatrixModule() {
         : null;
 
   return (
-    <section className="module-page">
+    <section className="module-page analysis-module-page">
       <div className="module-page__hero module-page__hero--with-action">
         <div className="module-page__hero-copy">
           <h1>Gene Matrix</h1>
@@ -273,7 +273,11 @@ export function GeneMatrixModule() {
         </div>
       ) : null}
 
-      <section className="config-card">
+      <section
+        className={`config-card analysis-result-card${
+          geneMatrixPayload ? "" : " analysis-result-card--pending"
+        }`}
+      >
         <div className="config-card__head config-card__head--with-action">
           <div className="config-card__icon">
             <BarChart3 size={18} />

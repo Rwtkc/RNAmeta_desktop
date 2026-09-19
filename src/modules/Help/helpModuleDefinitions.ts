@@ -2,6 +2,8 @@ export const HELP_NAV_CHILDREN = [
   { id: "help-overview", label: "Overview" },
   { id: "help-getting-started", label: "Getting Started" },
   { id: "help-upload-run", label: "Upload / Run" },
+  { id: "help-genome-browser", label: "Genome Browser" },
+  { id: "help-structure", label: "Structure" },
   { id: "help-meta-plot", label: "Meta Plot" },
   { id: "help-peak-distribution", label: "Peak Distribution" },
   { id: "help-gene-statistics", label: "Gene Statistics" },

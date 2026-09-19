@@ -16,10 +16,13 @@ import { PeakExonNumModule } from "@/modules/PeakExonNum/PeakExonNumModule";
 import { SplicesiteModule } from "@/modules/Splicesite/SplicesiteModule";
 import { TranscriptionModule } from "@/modules/Transcription/TranscriptionModule";
 import { TranslationModule } from "@/modules/Translation/TranslationModule";
+import { GenomeBrowserModule } from "@/modules/GenomeBrowser/GenomeBrowserModule";
+import { StructureModule } from "@/modules/Structure/StructureModule";
 
 function App() {
   const [activeModule, setActiveModule] = useState("setup");
   const [isBooting, setIsBooting] = useState(true);
+  const [mountedPersistentModules, setMountedPersistentModules] = useState(() => new Set<string>());
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -28,6 +31,16 @@ function App() {
 
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (activeModule !== "genome-browser" && activeModule !== "structure") return;
+    setMountedPersistentModules((current) => {
+      if (current.has(activeModule)) return current;
+      const next = new Set(current);
+      next.add(activeModule);
+      return next;
+    });
+  }, [activeModule]);
 
   if (isBooting) {
     return <LoadingScreen />;
@@ -50,6 +63,16 @@ function App() {
       {activeModule === "transcription" ? <TranscriptionModule /> : null}
       {activeModule === "translation" ? <TranslationModule /> : null}
       {activeModule === "splicesite" ? <SplicesiteModule /> : null}
+      {mountedPersistentModules.has("genome-browser") || activeModule === "genome-browser" ? (
+        <div hidden={activeModule !== "genome-browser"}>
+          <GenomeBrowserModule />
+        </div>
+      ) : null}
+      {mountedPersistentModules.has("structure") || activeModule === "structure" ? (
+        <div hidden={activeModule !== "structure"}>
+          <StructureModule />
+        </div>
+      ) : null}
       {isHelpPageId(activeModule) ? (
         <HelpModule activePage={activeModule} onNavigate={setActiveModule} />
       ) : null}

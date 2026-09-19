@@ -43,7 +43,7 @@ export function ConsoleDock() {
           {isBusy ? (
             <div className="console-shell__engine">
               <span className="status-dot is-busy" />
-              <span>R-ENGINE ACTIVE</span>
+              <span>R-engine active</span>
             </div>
           ) : null}
           {isBusy ? (
@@ -68,19 +68,13 @@ export function ConsoleDock() {
 
       {isExpanded ? (
         <div className="console-shell__body">
-          {logs.length > 0 ? (
-            logs.map((log) => (
-              <div key={log.id} className={`console-line console-line--${log.type}`}>
-                <span className="console-line__time">[{log.timestamp}]</span>
-                <span className="console-line__type">{log.type}</span>
-                <span className="console-line__message">{log.message}</span>
-              </div>
-            ))
-          ) : (
-            <div className="console-shell__empty">
-              Meta Plot progress and engine logs will appear here after the next run.
+          {logs.map((log) => (
+            <div key={log.id} className={`console-line console-line--${log.type}`}>
+              <span className="console-line__time">[{log.timestamp}]</span>
+              <span className="console-line__type">{log.type}</span>
+              <span className="console-line__message">{log.message}</span>
             </div>
-          )}
+          ))}
         </div>
       ) : null}
     </section>

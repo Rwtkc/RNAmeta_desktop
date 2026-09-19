@@ -120,13 +120,13 @@ export function SetupModule({ onNavigate }: { onNavigate?: (moduleId: string) =>
   }
 
   return (
-    <section className="module-page">
-      <div className="module-page__hero">
-        <h1>Project Initialization</h1>
-        <p>
-          Establish secure data connectivity and identify reference libraries for the RNAmeta
-          desktop workspace.
-        </p>
+    <section className="module-page setup-page">
+      <div className="module-page__hero setup-hero">
+        <div className="module-page__hero-copy">
+          <span className="setup-hero__context">Reference workspace</span>
+          <h1>Project Configuration</h1>
+          <p>Select a reference genome and validate its annotation library for RNAmeta analyses.</p>
+        </div>
       </div>
 
       <div className="setup-stack">
@@ -141,7 +141,7 @@ export function SetupModule({ onNavigate }: { onNavigate?: (moduleId: string) =>
         <ConfigCard
           icon={<Database size={18} />}
           title="Annotation Library"
-          desc="Choose the external annotation directory. The client will automatically check the selected species ID against gff, txdb, and txlens files."
+          desc="Choose the external annotation directory. The client checks the selected species annotation files and the additional reference files required by Genome Browser and Structure."
         >
           <PathRow
             placeholder="Select annotation directory..."
@@ -160,16 +160,6 @@ export function SetupModule({ onNavigate }: { onNavigate?: (moduleId: string) =>
               <span>
                 {isValidating ? "Validating annotation directory..." : annotationStatusText}
               </span>
-            </div>
-          ) : null}
-
-          {annotationValidation?.speciesFiles?.length ? (
-            <div className="summary-list summary-list--tight">
-              {annotationValidation.speciesFiles.map((file) => (
-                <div key={file} className="summary-list__item">
-                  Found: {file.split(/[/\\]/).pop() ?? file}
-                </div>
-              ))}
             </div>
           ) : null}
 

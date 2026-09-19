@@ -20,6 +20,12 @@ interface FigureExportDialogProps {
   state: FigureExportState;
   submitLabel?: string;
   title?: string;
+  formats?: readonly AnalysisExportFormat[];
+  scales?: readonly number[];
+  selectedScale?: number;
+  onScaleChange?: (scale: number) => void;
+  noWrapDescription?: boolean;
+  sentenceCaseTitle?: boolean;
 }
 
 export function FigureExportDialog({
@@ -31,7 +37,13 @@ export function FigureExportDialog({
   onSubmit,
   state,
   submitLabel = "Download Figure",
-  title = "Figure Export"
+  title = "Figure Export",
+  formats = ANALYSIS_EXPORT_FORMATS,
+  scales,
+  selectedScale,
+  onScaleChange,
+  noWrapDescription = false,
+  sentenceCaseTitle = false
 }: FigureExportDialogProps) {
   const isDataFormat = isDataExportFormat(state.format);
   const resolvedTitle = isDataFormat ? "Data Export" : title;
@@ -48,8 +60,8 @@ export function FigureExportDialog({
           <div className="export-modal__title-row">
             <div className="export-modal__badge">{badgeIcon}</div>
             <div>
-              <h3>{resolvedTitle}</h3>
-              <p>{resolvedDescription}</p>
+              <h3 className={sentenceCaseTitle ? "export-modal__title--sentence" : undefined}>{resolvedTitle}</h3>
+              <p className={noWrapDescription ? "export-modal__description--nowrap" : undefined}>{resolvedDescription}</p>
             </div>
           </div>
           <button
@@ -66,7 +78,7 @@ export function FigureExportDialog({
           <div className="export-menu__field export-menu__field--full">
             <span>Format</span>
             <div className="export-modal__format-grid">
-              {ANALYSIS_EXPORT_FORMATS.map((formatOption) => (
+              {formats.map((formatOption) => (
                 <button
                   key={formatOption}
                   type="button"
@@ -86,7 +98,23 @@ export function FigureExportDialog({
             </div>
           </div>
 
-          {isDataFormat ? null : (
+          {isDataFormat ? null : scales?.length && selectedScale && onScaleChange ? (
+            state.format === "png" ? <div className="export-menu__field export-menu__field--full">
+                <span>Resolution</span>
+                <div className="export-modal__scale-grid">
+                  {scales.map((scale) => (
+                    <button
+                      key={scale}
+                      type="button"
+                      className={`export-modal__format-option${selectedScale === scale ? " is-active" : ""}`}
+                      onClick={() => onScaleChange(scale)}
+                    >
+                      {scale}×
+                    </button>
+                  ))}
+                </div>
+              </div> : null
+          ) : (
             <div className="export-modal__grid">
               <label className="export-menu__field">
                 <span>Width (px)</span>

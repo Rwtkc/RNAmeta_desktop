@@ -1,0 +1,46 @@
+:root {
+  color-scheme: light;
+  --surface: #fffdf8;
+  --line: #c98468;
+  --node: #f7f4ec;
+  --node-border: #80867c;
+  --highlight: #c98468;
+}
+
+* { box-sizing: border-box; }
+html, body, #structure-root { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+body { background: var(--surface); font-family: sans-serif; }
+#structure-root { contain: strict; }
+#structure-root svg {
+  width: 100%;
+  height: 100%;
+  shape-rendering: optimizeSpeed;
+  text-rendering: optimizeSpeed;
+}
+.fornac-node { fill: transparent; stroke: var(--node-border); stroke-width: 1.1; }
+.fornac-nodeLabel { font-size: 6px; font-weight: 700; pointer-events: none; }
+.fornac-link { stroke: rgba(90, 100, 88, 0.7); pointer-events: none; }
+.fornac-link[link_type="basepair"] { stroke: var(--line); stroke-width: 1.8; }
+circle.fornac-node,
+path.fornac-node,
+polygon.fornac-node,
+circle.fornac-node[base_type],
+path.fornac-node[base_type],
+polygon.fornac-node[base_type] {
+  fill: transparent !important;
+  stroke: rgba(128, 134, 124, 0.72) !important;
+  stroke-width: 1.1 !important;
+  pointer-events: none;
+}
+line.fornac-link,
+line.fornac-link[link_type="basepair"] {
+  stroke: rgba(128, 134, 124, 0.65) !important;
+  stroke-width: 1.1 !important;
+}
+g.gnode.is-highlighted circle.fornac-node,
+g.gnode.is-highlighted path.fornac-node,
+g.gnode.is-highlighted polygon.fornac-node {
+  fill: #d8574d !important;
+  stroke: #a43b35 !important;
+}
+g.gnode.is-highlighted .fornac-nodeLabel { fill: #fff !important; }

@@ -25,7 +25,7 @@ const HEIGHT = 320;
 const COMPACT_MARGIN = { top: 18, right: 18, bottom: 50, left: 64 };
 const GRID_COLOR = "rgba(133, 155, 122, 0.16)";
 const AXIS_COLOR = "#41503c";
-const FONT_FAMILY = '"Montserrat", "PingFang SC", "Microsoft YaHei", sans-serif';
+const FONT_FAMILY = "sans-serif";
 const X_AXIS_EDGE_BUFFER = 28;
 let clipPathCounter = 0;
 

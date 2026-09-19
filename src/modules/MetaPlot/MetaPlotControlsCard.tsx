@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { ChevronDown, Play, RotateCcw, SlidersHorizontal } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { Check, ChevronDown, Play, RotateCcw, SlidersHorizontal } from "lucide-react";
 import type { MetaPlotControls } from "@/store/useAppStore";
 import {
   curveSettings,
@@ -118,14 +118,6 @@ export function MetaPlotControlsCard({
         </button>
       </div>
 
-      {!canRunAnalysis ? (
-        <div className="inline-alert inline-alert--warning">
-          <span>
-            Complete Project Status validation and upload at least one BED file in Upload / Run
-            to enable analysis.
-          </span>
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -167,29 +159,111 @@ function FieldRow({
   options?: Array<{ label: string; value: string }>;
   onChange: (value: string | number) => void;
 }) {
+  const labelId = useId();
+
   return (
-    <label className="field-shell">
-      <span>{label}</span>
+    <div className="field-shell">
+      <span id={labelId}>{label}</span>
       {type === "number" ? (
         <input
+          aria-labelledby={labelId}
           className="field-shell__input"
           type="number"
           value={value}
           onChange={(event) => onChange(Number(event.target.value))}
         />
       ) : (
-        <select
-          className="field-shell__input"
+        <CustomSelect
+          labelId={labelId}
+          options={options ?? []}
           value={String(value)}
-          onChange={(event) => onChange(event.target.value)}
-        >
-          {options?.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          onChange={onChange}
+        />
       )}
-    </label>
+    </div>
+  );
+}
+
+function CustomSelect({
+  labelId,
+  options,
+  value,
+  onChange
+}: {
+  labelId: string;
+  options: Array<{ label: string; value: string }>;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const selectedOption = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    function closeMenu(event: PointerEvent | KeyboardEvent) {
+      if (event instanceof KeyboardEvent && event.key !== "Escape") {
+        return;
+      }
+      if (event instanceof PointerEvent && rootRef.current?.contains(event.target as Node)) {
+        return;
+      }
+      setIsOpen(false);
+      if (event instanceof KeyboardEvent) {
+        triggerRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", closeMenu);
+    document.addEventListener("keydown", closeMenu);
+    return () => {
+      document.removeEventListener("pointerdown", closeMenu);
+      document.removeEventListener("keydown", closeMenu);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={rootRef} className={`custom-select${isOpen ? " is-open" : ""}`}>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="custom-select__trigger"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-labelledby={labelId}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        <span>{selectedOption?.label ?? value}</span>
+        <ChevronDown size={15} />
+      </button>
+      {isOpen ? (
+        <div className="custom-select__menu" role="listbox" aria-labelledby={labelId}>
+          {options.map((option) => {
+            const isSelected = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                className={`custom-select__option${isSelected ? " is-selected" : ""}`}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                  triggerRef.current?.focus();
+                }}
+              >
+                <span>{option.label}</span>
+                {isSelected ? <Check size={14} /> : null}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }

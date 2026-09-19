@@ -17,7 +17,7 @@
   max-width: calc(100vw - 2rem);
   padding: 0.58rem 0.68rem;
   border: 0.0625rem solid rgba(133, 155, 122, 0.22);
-  border-radius: 0.75rem;
+  border-radius: var(--app-radius-inner);
   background: rgba(255, 252, 246, 0.98);
   box-shadow: 0 0.7rem 1.3rem rgba(115, 98, 72, 0.14);
   color: var(--app-text);

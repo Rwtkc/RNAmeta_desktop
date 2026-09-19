@@ -8,13 +8,23 @@
     "dialog:default",
     "fs:default",
     {
-      "identifier": "shell:allow-spawn",
+      "identifier": "fs:allow-exists",
       "allow": [
-        {
-          "name": "r-engine",
-          "cmd": "$RESOURCE/resources/r-lang/bin/Rscript.exe",
-          "args": true
-        }
+        { "path": "$HOME/**" },
+        { "path": "C:\\**" },
+        { "path": "D:\\**" },
+        { "path": "E:\\**" },
+        { "path": "/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [
+        { "path": "$HOME/**" },
+        { "path": "C:\\**" },
+        { "path": "D:\\**" },
+        { "path": "E:\\**" },
+        { "path": "/**" }
       ]
     },
     {

@@ -255,7 +255,7 @@ export function SiteProfileAnalysisModule({
   const noticeMessage = resolveSiteSummaryNotice(moduleId, summary);
 
   return (
-    <section className="module-page">
+    <section className="module-page analysis-module-page">
       <div className="module-page__hero module-page__hero--with-action">
         <div className="module-page__hero-copy">
           <h1>{config.title}</h1>
@@ -281,7 +281,11 @@ export function SiteProfileAnalysisModule({
         </div>
       ) : null}
 
-      <section className="config-card">
+      <section
+        className={`config-card analysis-result-card${
+          payload ? "" : " analysis-result-card--pending"
+        }`}
+      >
         <div className="config-card__head config-card__head--with-action">
           <div className="config-card__icon">
             <MapPinned size={18} />

@@ -1,7 +1,9 @@
 mod embedded_scripts;
+mod r_engine;
 mod upload_preview;
 
 use embedded_scripts::resolve_embedded_script_path;
+use r_engine::{spawn_r_engine, validate_r_engine};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::fs;
@@ -82,6 +84,21 @@ fn validate_annotation_directory(
                 }
             }
         }
+
+        if target_species == "ara_TAIR10" {
+            for file_name in [
+                "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa",
+                "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa.fai",
+                "Arabidopsis_thaliana.TAIR10.51.gff3.gz",
+            ] {
+                let file = root.join(file_name);
+                if file.is_file() {
+                    species_files.push(file.display().to_string());
+                } else {
+                    missing_items.push(file.display().to_string());
+                }
+            }
+        }
     }
 
     Ok(AnnotationValidation {
@@ -105,6 +122,11 @@ fn resolve_resource_path(app: tauri::AppHandle, relative_path: String) -> Result
     let direct = resource_dir.join(&relative_path);
     if direct.exists() {
         return Ok(direct.display().to_string());
+    }
+
+    let parent_resource = resource_dir.join("_up_").join(&relative_path);
+    if parent_resource.exists() {
+        return Ok(parent_resource.display().to_string());
     }
 
     let nested = resource_dir.join("resources").join(&relative_path);
@@ -261,6 +283,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
+            validate_r_engine(app.handle())?;
             clear_session_cache_root(app.handle())?;
             let root = session_cache_root(app.handle())?;
             fs::create_dir_all(&root).map_err(|error| {
@@ -276,6 +299,7 @@ pub fn run() {
             normalize_uploaded_bed_files,
             validate_annotation_directory,
             resolve_resource_path,
+            spawn_r_engine,
             terminate_process_tree,
             resolve_session_cache_path,
             build_analysis_cache_key
@@ -288,4 +312,53 @@ pub fn run() {
             let _ = clear_session_cache_root(app_handle);
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_annotation_directory;
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn tair10_validation_includes_genome_browser_and_structure_files() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system clock should be available")
+            .as_nanos();
+        let root = std::env::temp_dir().join(format!("rnameta_tair10_validation_{unique}"));
+        fs::create_dir_all(&root).expect("temporary annotation directory should be created");
+
+        let required = [
+            "ara_TAIR10.txdb.sqlite",
+            "ara_TAIR10.txlens.rda",
+            "ara_TAIR10.gff.rda",
+            "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa",
+            "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa.fai",
+            "Arabidopsis_thaliana.TAIR10.51.gff3.gz",
+        ];
+        for file_name in required {
+            fs::write(root.join(file_name), b"test").expect("test resource should be written");
+        }
+
+        let valid = validate_annotation_directory(
+            root.display().to_string(),
+            Some("ara_TAIR10".to_string()),
+        )
+        .expect("validation should complete");
+        assert!(valid.is_valid);
+        assert_eq!(valid.species_files.len(), 6);
+
+        let missing_name = "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa.fai";
+        fs::remove_file(root.join(missing_name)).expect("test FAI should be removed");
+        let invalid = validate_annotation_directory(
+            root.display().to_string(),
+            Some("ara_TAIR10".to_string()),
+        )
+        .expect("validation should complete");
+        assert!(!invalid.is_valid);
+        assert!(invalid.missing_items.iter().any(|item| item.ends_with(missing_name)));
+
+        fs::remove_dir_all(root).expect("temporary annotation directory should be removed");
+    }
 }

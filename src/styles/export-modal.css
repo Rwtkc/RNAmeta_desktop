@@ -11,7 +11,6 @@
 .export-menu__field span {
   font-size: 0.58rem;
   font-weight: 900;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--app-placeholder);
 }
@@ -46,7 +45,7 @@
   width: min(520px, calc(100vw - 72px));
   overflow: hidden;
   border: 1px solid rgba(133, 155, 122, 0.22);
-  border-radius: 28px;
+  border-radius: var(--app-radius-outer);
   background: var(--app-surface-strong);
   box-shadow: 0 28px 70px rgba(84, 67, 49, 0.18);
 }
@@ -71,7 +70,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 11px;
+  border-radius: var(--app-radius-inner);
   background: var(--ribo-primary);
   color: #fff;
 }
@@ -81,8 +80,12 @@
   font-family: var(--app-display-font);
   font-size: 0.94rem;
   font-weight: 400;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.export-modal__head h3.export-modal__title--sentence {
+  font-weight: 600;
+  text-transform: none;
 }
 
 .export-modal__head p {
@@ -90,6 +93,11 @@
   color: var(--app-muted);
   font-size: 0.74rem;
   max-width: 260px;
+}
+
+.export-modal__head p.export-modal__description--nowrap {
+  max-width: none;
+  white-space: nowrap;
 }
 
 .export-modal__close {
@@ -101,7 +109,7 @@
   border: 0;
   background: transparent;
   color: var(--app-placeholder);
-  border-radius: 10px;
+  border-radius: var(--app-radius-inner);
   transition: background 160ms ease, color 160ms ease;
 }
 
@@ -128,10 +136,16 @@
   gap: 12px;
 }
 
+.export-modal__scale-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
 .export-modal__format-option {
   min-height: 44px;
   border: 2px solid var(--app-border);
-  border-radius: 15px;
+  border-radius: var(--app-radius-inner);
   background: var(--app-card);
   color: var(--app-placeholder);
   font-size: 0.86rem;
@@ -167,12 +181,11 @@
   width: 100%;
   min-height: 48px;
   border: 0;
-  border-radius: 17px;
+  border-radius: var(--app-radius-inner);
   background: var(--ribo-accent-warm);
   color: #fffdf8;
   font-size: 0.86rem;
   font-weight: 900;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
   box-shadow: 0 14px 28px rgba(201, 132, 104, 0.24);
   transition:

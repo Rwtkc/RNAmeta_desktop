@@ -9,14 +9,14 @@ import {
   Crosshair,
   Dna,
   FolderCog,
-  LayoutGrid,
   Settings2,
-  Waypoints
+  Waypoints,
+  ScanLine,
+  Share2
 } from "lucide-react";
 import { ConsoleDock } from "@/components/shared/ConsoleDock";
 import { HELP_NAV_CHILDREN } from "@/modules/Help/helpModuleDefinitions";
 import { SITE_NAV_CHILDREN } from "@/modules/SiteProfile/siteModuleDefinitions";
-import { useLogStore } from "@/store/useLogStore";
 
 const brandIconSrc = new URL("../../src-tauri/icons/128x128.png", import.meta.url)
   .href;
@@ -36,6 +36,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: "setup", label: "Project Configuration", icon: Settings2 },
   { id: "upload-run", label: "Upload / Run", icon: FolderCog },
+  { id: "genome-browser", label: "Genome Browser", icon: ScanLine },
+  { id: "structure", label: "Structure", icon: Share2 },
   { id: "meta-plot", label: "Meta Plot", icon: ChartSpline },
   { id: "peak-distribution", label: "Peak Distribution", icon: BarChart3 },
   {
@@ -83,7 +85,6 @@ export function MainLayout({
   onModuleChange,
   children
 }: MainLayoutProps) {
-  const { activeProcessCount } = useLogStore();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     "gene-statistics": false,
     "exon-statistics": false,
@@ -116,7 +117,10 @@ export function MainLayout({
       <aside className="app-sidebar">
         <div className="app-sidebar__brand">
           <img className="app-sidebar__brand-icon" src={brandIconSrc} alt="" />
-          <span>RNAmeta</span>
+          <span className="app-sidebar__brand-copy">
+            <strong>RNAmeta</strong>
+            <span>Desktop</span>
+          </span>
         </div>
 
         <nav className="app-sidebar__nav">
@@ -195,18 +199,13 @@ export function MainLayout({
             );
           })}
         </nav>
-
-        <div className="app-sidebar__status">
-          <span className={clsx("status-dot", { "is-busy": activeProcessCount > 0 })} />
-          {activeProcessCount > 0 ? "Engine Active" : "Engine Ready"}
-        </div>
       </aside>
 
       <div className="app-workspace">
         <header className="app-workspace__header">
           <div className="workspace-breadcrumb">
-            <LayoutGrid size={12} />
-            <span>Workspace / </span>
+            <span>Workspace</span>
+            <span className="workspace-breadcrumb__separator" aria-hidden="true">/</span>
             <strong>{activeItem?.label ?? "Module"}</strong>
           </div>
         </header>

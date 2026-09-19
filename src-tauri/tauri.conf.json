@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "RNAmeta",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.rnameta.desktop",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -16,21 +16,35 @@
         "title": "RNAmeta Desktop",
         "width": 1100,
         "height": 700,
-        "minWidth": 1100,
-        "minHeight": 700,
+        "minWidth": 760,
+        "minHeight": 560,
         "resizable": true,
         "center": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$RESOURCE/**",
+          "$APPDATA/**",
+          "$LOCALDATA/**",
+          "$CACHE/**",
+          "C:\\**",
+          "D:\\**",
+          "E:\\**",
+          "/**"
+        ]
+      }
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
     "resources": [
-      "../r-lang/"
+      "../r-lang/",
+      "../external/viennarna/"
     ],
     "icon": [
       "icons/32x32.png",

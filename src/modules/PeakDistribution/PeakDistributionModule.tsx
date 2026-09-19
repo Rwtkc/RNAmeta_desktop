@@ -300,15 +300,17 @@ export function PeakDistributionModule() {
   }
 
   return (
-    <section className="module-page">
+    <section className="module-page analysis-module-page">
       <div className="module-page__hero">
         <h1>Peak Distribution</h1>
-        <p>
-          Run feature-level peak annotation against the saved Upload / Run BED
-          context and compare how intervals distribute across promoter, UTR,
-          CDS, intron, and intergenic regions.
-        </p>
+        <p>Run feature-level peak annotation against the saved Upload / Run BED context and compare how intervals distribute across promoter, UTR, CDS, intron, and intergenic regions.</p>
       </div>
+
+      {!canRunAnalysis ? (
+        <div className="inline-alert inline-alert--warning">
+          Complete Project Status validation and upload at least one BED file in Upload / Run to enable analysis.
+        </div>
+      ) : null}
 
       <PeakDistributionControlsCard
         canRunAnalysis={canRunAnalysis}
@@ -318,17 +320,14 @@ export function PeakDistributionModule() {
         selectedFeatures={peakDistributionControls.selectedFeatures}
       />
 
-      <section className="config-card">
+      <section className={`config-card analysis-result-card${renderedPayload ? "" : " analysis-result-card--pending"}`}>
         <div className="config-card__head config-card__head--with-action">
           <div className="config-card__icon">
             <BarChart3 size={18} />
           </div>
           <div className="config-card__copy">
             <h3>Rendered Result</h3>
-            <p>
-              The chart and summary below are generated from the same desktop R
-              runner output.
-            </p>
+            <p>The chart and summary below are generated from the same desktop R runner output.</p>
           </div>
           {renderedPayload ? (
             <div className="export-menu">
@@ -353,22 +352,10 @@ export function PeakDistributionModule() {
 
         {peakDistributionSummary ? (
           <div className="meta-plot-summary-grid peak-distribution-summary-grid">
-            <SummaryStatItem
-              label="Species"
-              value={peakDistributionSummary.species}
-            />
-            <SummaryStatItem
-              label="Samples"
-              value={String(peakDistributionSummary.sampleCount)}
-            />
-            <SummaryStatItem
-              label="Intervals"
-              value={String(peakDistributionSummary.intervalCount)}
-            />
-            <SummaryStatItem
-              label="Feature Rows"
-              value={String(peakDistributionSummary.featureRowCount)}
-            />
+            <SummaryStatItem label="Species" value={peakDistributionSummary.species} />
+            <SummaryStatItem label="Samples" value={String(peakDistributionSummary.sampleCount)} />
+            <SummaryStatItem label="Intervals" value={String(peakDistributionSummary.intervalCount)} />
+            <SummaryStatItem label="Feature Rows" value={String(peakDistributionSummary.featureRowCount)} />
           </div>
         ) : null}
 

@@ -7,7 +7,7 @@
 .site-profile-stage__figure {
   overflow: hidden;
   border: 2px solid var(--app-border);
-  border-radius: 16px;
+  border-radius: var(--app-radius-inner);
   background: #fffcf6;
   padding: 20px 18px;
 }
@@ -24,7 +24,6 @@
   color: #22301f;
   font-size: 1rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
 }
 
 .site-profile-d3-chart__sample-switcher {
@@ -35,7 +34,6 @@
 .site-profile-d3-chart__sample-switcher-label {
   font-size: 0.62rem;
   font-weight: 900;
-  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #7c8b74;
 }
@@ -50,7 +48,7 @@
   min-height: 38px;
   padding: 8px 14px;
   border: 1px solid rgba(133, 155, 122, 0.26);
-  border-radius: 999px;
+  border-radius: var(--app-radius-inner);
   background: rgba(255, 252, 246, 0.96);
   color: #41503c;
   font-size: 0.76rem;
@@ -97,7 +95,6 @@
   color: #41503c;
   font-size: 0.9rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
 }
 
 .site-profile-chart-panel__svg {
@@ -182,7 +179,7 @@
   max-width: calc(100vw - 2rem);
   padding: 0.58rem 0.7rem;
   border: 0.0625rem solid rgba(133, 155, 122, 0.22);
-  border-radius: 0.75rem;
+  border-radius: var(--app-radius-inner);
   background: rgba(255, 252, 246, 0.98);
   box-shadow: 0 0.7rem 1.3rem rgba(115, 98, 72, 0.14);
   color: var(--app-text);

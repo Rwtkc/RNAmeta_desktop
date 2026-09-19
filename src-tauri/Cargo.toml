@@ -1,6 +1,6 @@
 [package]
 name = "rnameta_windows"
-version = "0.1.0"
+version = "1.0.0"
 description = "RNAmeta Windows desktop client"
 authors = ["Codex", "User"]
 edition = "2021"
@@ -10,17 +10,17 @@ name = "rnameta_windows_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2.6.0", features = [] }
 
 [dependencies]
 include_dir = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
-tauri = { version = "2", features = [] }
-tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-shell = "2"
+tauri = { version = "2.11.0", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.7.3"
+tauri-plugin-fs = "2.5.2"
+tauri-plugin-shell = "2.3.6"
 
 [profile.release]
 panic = "abort"

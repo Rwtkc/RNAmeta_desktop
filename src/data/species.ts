@@ -5,58 +5,139 @@ export interface SpeciesOption {
   id: string;
 }
 
-const RAW_SPECIES = [
-  "Arabidopsis thaliana(ara_TAIR10)",
-  "Arachis_hypogaea(ahy_tifrunner2)",
-  "Brachypodium distachyon(bdi_v3)",
-  "Caenorhabditis elegans(cel_WBcel235)",
-  "Drosophila melanogaster(dme_BDGP6)",
-  "Danio rerio(dre_GRCz11)",
-  "Gallus gallus(gga_GRCg6a)",
-  "Gorilla gorilla(ggo_gorGor4)",
-  "Glycine max(gma_v2)",
-  "Homo sapiens 19(hg19)",
-  "Homo sapiens 38(hg38)",
-  "Mus musculus 10(mm10)",
-  "Macaca mulatta(mmu_Mmul_8)",
-  "Medicago truncatula(mtr_MedtrA17_4)",
-  "Oryza sativa(osa_IRGSP_1)",
-  "Oryza rufipogon(OR_W1943)",
-  "Populus trichocarpa(ptc_v3)",
-  "Pan troglodytes(ptr_v3)",
-  "Rattus norvegicus(rn6)",
-  "Sorghum bicolor(sbi_v3)",
-  "Saccharomyces cerevisiae(sce_R64)",
-  "Sus scrofa(ssc_Sscrofa11)",
-  "Vitis vinifera(vvi_12X)",
-  "Zea mays(zma_RefGen_v4)"
-] as const;
-
-const SPECIES_OVERRIDES: Record<string, Partial<SpeciesOption>> = {
-  "Oryza rufipogon(OR_W1943)": {
-    assembly: "OR_W1943",
-    id: "osa_rufipogon"
-  }
+const LEGACY_LABEL_BY_ID: Record<string, string> = {
+  ara_TAIR10: "Arabidopsis thaliana(ara_TAIR10)",
+  cel_WBcel235: "Caenorhabditis elegans(cel_WBcel235)",
+  dme_BDGP6: "Drosophila melanogaster(dme_BDGP6)",
+  dre_GRCz11: "Danio rerio(dre_GRCz11)",
+  gma_v2: "Glycine max(gma_v2)",
+  hg19: "Homo sapiens 19(hg19)",
+  hg38: "Homo sapiens 38(hg38)",
+  mm10: "Mus musculus 10(mm10)",
+  osa_IRGSP_1: "Oryza sativa(osa_IRGSP_1)",
+  rn6: "Rattus norvegicus(rn6)",
+  sce_R64: "Saccharomyces cerevisiae(sce_R64)",
+  zma_RefGen_v4: "Zea mays(zma_RefGen_v4)"
 };
 
-function parseSpeciesLabel(label: string): SpeciesOption {
-  const match = label.match(/^(.*)\(([^()]+)\)$/);
+const SPECIES_RECORDS = [
+  ["atr.v1", "Acer truncatum", "v1"],
+  ["awo_gca_000247605", "Acetobacterium woodii", "DSM 1030, ASM24760v1"],
+  ["aca.ASM1452938v2", "Adiantum capillus-veneris", "ASM1452938v2"],
+  ["aca.v2", "Amphidinium carterae", "v2"],
+  ["aga.AgamP4", "Anopheles gambiae", "AgamP4"],
+  ["ara_TAIR10", "Arabidopsis thaliana", "TAIR10"],
+  ["bsu_168", "Bacillus subtilis", "str. 168"],
+  ["bth_gca_000011065", "Bacteroides thetaiotaomicron", "VPI-5482, ASM1106v1"],
+  ["bta.ARS-UCD1.2", "Bos taurus", "ARS-UCD1.2"],
+  ["bdi.v3.0", "Brachypodium distachyon", "bdi.v3.0"],
+  ["bna.AST_PRJEB5043_v1", "Brassica napus", "AST_PRJEB5043_v1"],
+  ["bra.Brapa_1.0", "Brassica rapa", "Brapa 1.0"],
+  ["cel_WBcel235", "Caenorhabditis elegans", "WBcel235"],
+  ["csi.AHAU_CSS_1", "Camellia sinensis", "AHAU_CSS_1"],
+  ["clu.ROS_Cfam_1.0", "Canis lupus familiaris", "ROS Cfam 1.0"],
+  ["cvi_gca_000022005", "Caulobacter vibrioides", "NA1000, ASM2200v1"],
+  ["cre.v5.5", "Chlamydomonas reinhardtii", "v5.5"],
+  ["cac_gca_001042715", "Clostridium aceticum", "DSM 1496, GCA_001042715"],
+  ["cdr_gca_003096175", "Clostridium drakei", "DSM 1496, GCA_003096175"],
+  ["clj_gca_000143685", "Clostridium ljungdahlii", "DSM 13528, ASM14368v1"],
+  ["csa.ASM407v2", "Cucumis sativus", "ASM407v2"],
+  ["csa_chineseLong_v3", "Cucumis sativus chineseLong v3", "chineseLong_v3"],
+  ["dcug.v1", "Dalbergia cultrata", "v1"],
+  ["dre_GRCz11", "Danio rerio", "GRCz11"],
+  ["dme_BDGP6", "Drosophila melanogaster", "BDGP6"],
+  ["eco_gca_000931565", "Escherichia coli", "K-12 substr. RV308, ASM93156v1"],
+  ["ecoli_k12", "Escherichia coli", "K-12"],
+  ["eli_gca_001481725", "Eubacterium limosum", "SA11, ASM148172v1"],
+  ["fjo_gca_000016645", "Flavobacterium johnsoniae", "UW101, ASM1664v1"],
+  ["gga.GRCg7b", "Gallus gallus", "GRCg7b"],
+  ["gma_v2", "Glycine max", "v2.1"],
+  ["ggo.gorGor4", "Gorilla gorilla", "gorGor4"],
+  ["gra.Graimondii2_0_v6", "Gossypium raimondii", "Graimondii2_0_v6"],
+  ["hsa_gca_000006805", "Halobacterium salinarum", "NRC-1, ASM680v1"],
+  ["hsa_NRC1", "Halobacterium salinarum", "NRC1"],
+  ["hvo_DS2", "Haloferax volcanii", "DS2, ASM2568v1"],
+  ["hg19", "Homo sapiens", "hg19"],
+  ["hg38.gencode_v46", "Homo sapiens", "hg38, GENECODE V46"],
+  ["hg38", "Homo sapiens", "hg38"],
+  ["kmi_gca_000963575", "Klebsiella michiganensis", "RC10, ASM96357v1"],
+  ["lrh_gca_002287945", "Lacticaseibacillus rhamnosus GG", "DSM 14870, GCA_002287945"],
+  ["lin_gca_000195795", "Listeria innocua", "Clip11262, ASM19579v1"],
+  ["lmo_gca_000196035", "Listeria monocytogenes", "EGD-e, ASM19603v1"],
+  ["lch.v1", "Litchi chinensis", "v1"],
+  ["lmi_cau", "Locusta migratoria", "CAU V1"],
+  ["lmi.240118", "Locusta migratoria", "NCBI V2"],
+  ["mml.Mmul_10", "Macaca mulatta", "Mmul_10"],
+  ["mdo.ASM211411v1", "Malus domestica golden", "ASM211411v1"],
+  ["mpo.MpTak1_v7.1", "Marchantia polymorpha", "MpTak1 v7.1"],
+  ["mtr.MedtrA17_4.0", "Medicago truncatula", "MedtrA17 4.0"],
+  ["mma.ASM706v1", "Methanosarcina mazei", "ASM706v1"],
+  ["mm10", "Mus musculus", "mm10"],
+  ["mm39", "Mus musculus", "mm39"],
+  ["mtu_gca_000016145", "Mycobacterium tuberculosis", "H37Ra, ASM1614v1"],
+  ["mab_gca_000069185", "Mycobacteroides abscessus", "ATCC19977, ASM6918v1"],
+  ["msm_gca_000015005", "Mycolicibacterium smegmatis", "MC2-155, ASM1500v1"],
+  ["ncr.NC12", "Neurospora crassa", "NC12"],
+  ["nbe.v1", "Nicotiana benthamiana", "v1"],
+  ["ntab.TN90", "Nicotiana tabacum", "TN90"],
+  ["osai.ASM465v1", "Oryza indica", "ASM465v1"],
+  ["oru.OR_W1943", "Oryza rufipogon", "OR_W1943"],
+  ["Basmati1.IGDBv1", "Oryza sativa", "Basmati1 IGDBv1"],
+  ["CG14.IGDBv1", "Oryza sativa", "CG14 IGDBv1"],
+  ["G46.IGDBv1", "Oryza sativa", "G46 IGDBv1"],
+  ["osa_huazhan", "Oryza sativa", "Huazhan 1.0"],
+  ["IR64.IGDBv1", "Oryza sativa", "IR64 IGDBv1"],
+  ["osa_msu7", "Oryza sativa", "IRGSP 1.0, MSU7 version"],
+  ["osa_IRGSP_1", "Oryza sativa", "IRGSP 1.0, RAP-DB version"],
+  ["Lemont.IGDBv1", "Oryza sativa", "Lemont IGDBv1"],
+  ["LJ.IGDBv1", "Oryza sativa", "LJ IGDBv1"],
+  ["MSU.IGDBv1", "Oryza sativa", "MSU IGDBv1"],
+  ["N22.IGDBv1", "Oryza sativa", "N22 IGDBv1"],
+  ["NamRoo.IGDBv1", "Oryza sativa", "NamRoo IGDBv1"],
+  ["TM.IGDBv1", "Oryza sativa", "TM IGDBv1"],
+  ["Tumba.IGDBv1", "Oryza sativa", "Tumba IGDBv1"],
+  ["WSSM.IGDBv1", "Oryza sativa", "WSSM IGDBv1"],
+  ["ptr.Pan_tro_3.0", "Pan troglodytes", "Pan_tro_3.0"],
+  ["ppa.Phypa_V3", "Physcomitrium patens", "Phypa_V3"],
+  ["ptc.Pop_tri_v3", "Populus trichocarpa", "Pop_tri_v3"],
+  ["pae_gca_002968755", "Pseudomonas aeruginosa", "AR441, GCA_002968755"],
+  ["pfl_gca_001307155", "Pseudomonas fluorescens", "FW300-N2E3, ASM130715v1"],
+  ["pfu_dsm_3638", "Pyrococcus furiosus", "DSM 3638"],
+  ["rn6", "Rattus norvegicus", "rn6"],
+  ["sce_R64", "Saccharomyces cerevisiae", "R64"],
+  ["sen_gca_003325055", "Salmonella enterica", "GCA_003325055"],
+  ["smo.v1", "Selaginella moellendorffii", "v1.0"],
+  ["sme_gca_002197125", "Sinorhizobium meliloti", "M162, ASM219712v1"],
+  ["sly_SL3", "Solanum lycopersicum", "SL v3.0"],
+  ["stu.SolTub_3.0", "Solanum tuberosum", "SolTub 3.0"],
+  ["sbi.NCBIv3", "Sorghum bicolor", "NCBIv3"],
+  ["sau_gca_001018655", "Staphylococcus aureus", "GCA_001018655"],
+  ["spn_gca_000018965", "Streptococcus pneumoniae", "70585, ASM1896v1"],
+  ["sav_gca_000009765", "Streptomyces avermitilis", "MA4680, ASM976v2"],
+  ["scl_GCF_005519465", "Streptomyces clavuligerus", "ATCC 27064, GCF_005519465"],
+  ["sco_GCF_000203835", "Streptomyces coelicolor", "A3(2), ASM20383v1"],
+  ["sgr_gca_000010605", "Streptomyces griseus", "JCM 4626, GCA_000010605"],
+  ["sli_GCF_000739105", "Streptomyces lividans", "TK24, GCF_000739105"],
+  ["sts_GCF_003932715", "Streptomyces tsukubensis", "NRRL 18488, GCF_003932715"],
+  ["sve_gca_000253235", "Streptomyces venezuelae", "ATCC 10712, ASM25323v1"],
+  ["ssc.Sscrofa11.1", "Sus scrofa", "Sscrofa11.1"],
+  ["ska.Fugka2468_1", "Symbiodinium kawagutii", "Fugka2468_1"],
+  ["syn_gca_000478825", "Synechocystis sp.", "PCC 6714, ASM47882v2"],
+  ["tae.IWGSC", "Triticum aestivum", "IWGSC RefSeq 1.0"],
+  ["vna_gca_001680085", "Vibrio natriegens", "CCUG 16374, ASM168008v1"],
+  ["vvu_gca_000039765", "Vibrio vulnificus", "CMCP6, ASM3976v1"],
+  ["vvi.PN40024.v4", "Vitis vinifera", "PN40024.v4"],
+  ["xtr.UCB_Xtro_10.0", "Xenopus tropicalis", "UCB Xtro 10.0"],
+  ["zma.B73_NAM5.0", "Zea mays", "B73 NAM 5.0"],
+  ["zma_RefGen_v4", "Zea mays", "B73 RefGen v4"],
+  ["zmo_gca_000007105", "Zymomonas mobilis", "ZM4, ASM710v1"],
+] as const;
 
-  if (!match) {
-    return {
-      label,
-      name: label,
-      assembly: label,
-      id: label
-    };
-  }
-
-  return {
-    label,
-    name: match[1],
-    assembly: SPECIES_OVERRIDES[label]?.assembly ?? match[2],
-    id: SPECIES_OVERRIDES[label]?.id ?? match[2]
-  };
-}
-
-export const SPECIES_OPTIONS: SpeciesOption[] = RAW_SPECIES.map(parseSpeciesLabel);
+export const SPECIES_OPTIONS: SpeciesOption[] = SPECIES_RECORDS.map(
+  ([id, name, assembly]) => ({
+    label: LEGACY_LABEL_BY_ID[id] ?? `${name}(${id})`,
+    name,
+    assembly,
+    id
+  })
+);

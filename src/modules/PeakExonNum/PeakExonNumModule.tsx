@@ -222,7 +222,7 @@ export function PeakExonNumModule() {
   }
 
   return (
-    <section className="module-page">
+    <section className="module-page analysis-module-page">
       <div className="module-page__hero module-page__hero--with-action">
         <div className="module-page__hero-copy">
           <h1>Peak Exon Num</h1>
@@ -251,7 +251,11 @@ export function PeakExonNumModule() {
         </div>
       ) : null}
 
-      <section className="config-card">
+      <section
+        className={`config-card analysis-result-card${
+          peakExonNumPayload ? "" : " analysis-result-card--pending"
+        }`}
+      >
         <div className="config-card__head config-card__head--with-action">
           <div className="config-card__icon">
             <BarChart3 size={18} />

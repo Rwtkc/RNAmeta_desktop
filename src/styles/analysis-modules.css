@@ -1,0 +1,311 @@
+.analysis-module-page {
+  --analysis-module-radius: var(--app-radius-inner);
+  --analysis-module-outer-radius: var(--app-radius-outer);
+  gap: 20px;
+}
+
+.analysis-module-page > .module-page__hero {
+  min-height: 112px;
+  padding: 1.25rem;
+  border: 1px solid var(--app-border-soft);
+  border-radius: var(--analysis-module-outer-radius);
+  background: rgba(255, 253, 248, 0.88);
+  box-shadow: var(--app-shadow);
+}
+
+.analysis-module-page > .module-page__hero h1 {
+  font-size: 1.56rem;
+  font-weight: 600;
+}
+
+.analysis-module-page > .module-page__hero p {
+  max-width: 64rem;
+  margin-top: 7px;
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.analysis-module-page .config-card {
+  padding: 1.25rem;
+  border: 1px solid var(--app-border-soft);
+  border-radius: var(--analysis-module-outer-radius);
+  background: rgba(255, 253, 248, 0.88);
+}
+
+.analysis-module-page .config-card__head {
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.analysis-module-page .config-card__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--analysis-module-radius);
+}
+
+.analysis-module-page .config-card__head h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.analysis-module-page .config-card__head p {
+  margin-top: 5px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.analysis-module-page .action-button {
+  min-height: 36px;
+  padding: 8px 13px;
+  border-width: 1px;
+  border-radius: var(--analysis-module-radius);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.analysis-module-page .action-button--primary {
+  min-height: 46px;
+  padding: 11px 20px;
+  border-radius: var(--analysis-module-radius);
+  border-color: var(--ribo-primary-deep);
+  background: var(--ribo-primary-deep);
+  color: #fffdf8;
+  box-shadow: 0 10px 22px rgba(101, 121, 91, 0.2);
+}
+
+.analysis-module-page .action-button--primary:hover:not(:disabled) {
+  border-color: var(--ribo-primary);
+  background: var(--ribo-primary);
+  color: #fff;
+}
+
+.analysis-module-page > .inline-alert {
+  margin: 0;
+  border-radius: var(--analysis-module-radius);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.analysis-module-page .inline-alert--warning {
+  border-color: #e5a3aa;
+  background: #f8d7da;
+  color: #8f2635;
+}
+
+.analysis-module-page .control-section,
+.analysis-module-page .field-shell__input {
+  border-width: 1px;
+  border-radius: var(--analysis-module-radius);
+}
+
+.analysis-module-page .control-section {
+  padding: 1rem;
+}
+
+.analysis-module-page .control-section__head h4,
+.analysis-module-page .field-shell > span {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.analysis-module-page .field-shell__input {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 0.76rem;
+}
+
+.analysis-module-page .field-shell__input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.analysis-module-page .field-shell__input[type="number"]::-webkit-inner-spin-button,
+.analysis-module-page .field-shell__input[type="number"]::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.analysis-module-page .custom-select {
+  position: relative;
+  min-width: 0;
+}
+
+.analysis-module-page .custom-select.is-open {
+  z-index: 12;
+}
+
+.analysis-module-page .custom-select__trigger {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--analysis-module-radius);
+  background: var(--app-card);
+  color: var(--app-text);
+  font: inherit;
+  font-size: 0.76rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.analysis-module-page .custom-select__trigger:hover,
+.analysis-module-page .custom-select.is-open .custom-select__trigger {
+  border-color: rgba(91, 119, 80, 0.58);
+}
+
+.analysis-module-page .custom-select__trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(91, 119, 80, 0.12);
+}
+
+.analysis-module-page .custom-select__trigger svg {
+  flex: 0 0 auto;
+  color: var(--ribo-primary-deep);
+  transition: transform 160ms ease;
+}
+
+.analysis-module-page .custom-select.is-open .custom-select__trigger svg {
+  transform: rotate(180deg);
+}
+
+.analysis-module-page .custom-select__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+  border: 1px solid rgba(133, 155, 122, 0.28);
+  border-radius: var(--analysis-module-radius);
+  background: #fffdf8;
+  box-shadow: 0 14px 30px rgba(58, 49, 38, 0.14);
+}
+
+.analysis-module-page .custom-select__option {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--analysis-module-radius);
+  background: transparent;
+  color: var(--app-text);
+  font: inherit;
+  font-size: 0.74rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.analysis-module-page .custom-select__option:hover,
+.analysis-module-page .custom-select__option:focus-visible {
+  outline: none;
+  background: var(--app-surface-soft);
+}
+
+.analysis-module-page .custom-select__option.is-selected {
+  background: var(--app-sidebar-active);
+  color: var(--ribo-primary-deep);
+  font-weight: 600;
+}
+
+.analysis-module-page .meta-plot-summary-grid {
+  gap: 10px;
+  margin-top: 0;
+}
+
+.analysis-module-page .meta-plot-summary-item {
+  gap: 6px;
+  padding: 12px;
+  border-width: 1px;
+  border-radius: var(--analysis-module-radius);
+  background: rgba(248, 242, 234, 0.55);
+}
+
+.analysis-module-page .meta-plot-summary-item__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.analysis-module-page .meta-plot-summary-item__value {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.analysis-module-page .analysis-result-card .config-card__icon {
+  display: none;
+}
+
+.analysis-module-page .analysis-result-card .config-card__head {
+  align-items: flex-start;
+}
+
+.analysis-module-page .analysis-result-card .config-card__copy h3 {
+  width: max-content;
+  padding: 4px 8px;
+  border-radius: var(--analysis-module-radius);
+  background: var(--app-sidebar-active);
+  color: var(--ribo-primary-deep);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.analysis-module-page .analysis-result-card .config-card__copy p {
+  display: none;
+}
+
+.analysis-module-page .analysis-result-card--pending .config-card__head {
+  margin-bottom: 0;
+  transform: translate(-0.25rem, -0.25rem);
+}
+
+.analysis-module-page .analysis-result-card--pending .meta-plot-stage,
+.analysis-module-page .analysis-result-card--pending .peak-distribution-stage,
+.analysis-module-page .analysis-result-card--pending .site-profile-stage {
+  display: none;
+}
+
+.analysis-module-page .analysis-result-card--pending > .inline-alert,
+.analysis-module-page .analysis-result-card--pending > .inline-note {
+  margin-top: 1rem;
+}
+
+.analysis-module-page .meta-plot-stage__figure,
+.analysis-module-page .peak-distribution-d3-chart,
+.analysis-module-page .site-profile-stage__figure {
+  border-width: 1px;
+  border-radius: var(--analysis-module-radius);
+}
+
+@media (max-width: 720px) {
+  .analysis-module-page > .module-page__hero--with-action {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .analysis-module-page > .module-page__hero--with-action .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .analysis-module-page .config-card__head--with-action {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .analysis-module-page .config-card__head--with-action .export-menu {
+    margin-left: auto;
+  }
+}

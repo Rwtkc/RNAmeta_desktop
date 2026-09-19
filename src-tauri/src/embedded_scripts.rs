@@ -1,10 +1,11 @@
 use include_dir::{include_dir, Dir};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 use tauri::Manager;
 
 static EMBEDDED_SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources/scripts");
-const EXTRACTION_MARKER: &str = ".embedded-scripts-ready";
+static EMBEDDED_SCRIPTS_READY: OnceLock<Result<(), String>> = OnceLock::new();
 
 fn copy_dir(dir: &Dir<'_>, dest: &Path) -> Result<(), String> {
     fs::create_dir_all(dest).map_err(|error| {
@@ -63,16 +64,8 @@ pub fn resolve_embedded_script_path(
         .join("session-cache")
         .join("embedded-resources")
         .join("scripts");
-    let marker_path = root.join(EXTRACTION_MARKER);
-
-    if !marker_path.exists() {
-        copy_dir(&EMBEDDED_SCRIPTS, &root)?;
-        fs::write(&marker_path, b"ok").map_err(|error| {
-            format!(
-                "Failed to write embedded scripts marker '{}': {error}",
-                marker_path.display()
-            )
-        })?;
+    if let Err(error) = EMBEDDED_SCRIPTS_READY.get_or_init(|| copy_dir(&EMBEDDED_SCRIPTS, &root)) {
+        return Err(error.clone());
     }
 
     Ok(Some(root.join(PathBuf::from(script_relative))))

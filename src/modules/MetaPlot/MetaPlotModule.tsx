@@ -291,11 +291,17 @@ export function MetaPlotModule() {
   }
 
   return (
-    <section className="module-page">
+    <section className="module-page analysis-module-page">
       <div className="module-page__hero">
         <h1>Meta Plot</h1>
         <p>Generate transcript-relative meta-plot profiles and review the resulting desktop visualization and summary output.</p>
       </div>
+
+      {!canRunAnalysis ? (
+        <div className="inline-alert inline-alert--warning">
+          Complete Project Status validation and upload at least one BED file in Upload / Run to enable analysis.
+        </div>
+      ) : null}
 
       <MetaPlotControlsCard
         canRunAnalysis={canRunAnalysis}
@@ -306,7 +312,11 @@ export function MetaPlotModule() {
         onRun={() => void runMetaPlot()}
       />
 
-      <section className="config-card">
+      <section
+        className={`config-card analysis-result-card${
+          metaPlotPayload && renderedSvg ? "" : " analysis-result-card--pending"
+        }`}
+      >
         <div className="config-card__head config-card__head--with-action">
           <div className="config-card__icon">
             <BarChart3 size={18} />

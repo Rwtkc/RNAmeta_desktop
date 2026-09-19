@@ -19,6 +19,8 @@ export const helpContentCore: HelpPage[] = [
             items: [
               "Project Configuration for species and annotation directory setup",
               "Upload / Run for BED ingestion and session context preparation",
+              "Genome Browser for transcript-coordinate mapping and embedded IGV inspection",
+              "Structure for offline RNAfold secondary-structure analysis",
               "Meta Plot for transcript-relative distribution profiles",
               "Peak Distribution for feature-level annotation proportions",
               "Gene Statistics for Gene Type, Peak Gene Size, and Gene Matrix",
@@ -31,7 +33,7 @@ export const helpContentCore: HelpPage[] = [
       {
         title: "Relationship to the web platform",
         paragraphs: [
-          "The desktop client follows the same overall RNAmeta analysis logic and naming system as the public web platform, so users can move between the two with minimal conceptual friction. The web entry point is https://rnainformatics.cn/RNAmeta/ and serves as the official online reference for the broader project presentation.",
+          "The desktop client follows the same overall RNAmeta analysis logic and naming system as the public web platform, so users can move between the two with minimal conceptual friction. The web entry point is https://rnainformatics.cn/RNAmeta-online/ and serves as the official online reference for the broader project presentation.",
           "When both platforms describe the same module, use the desktop behavior shown inside the client as the practical source of truth for local work. The web platform is best treated as complementary documentation, external presentation material, and a reference for module intent."
         ],
         lists: [
@@ -94,8 +96,8 @@ export const helpContentCore: HelpPage[] = [
       {
         title: "Step 4: Run modules and export results",
         paragraphs: [
-          "After the upload context is ready, open any analysis module in the sidebar and run it with the current settings. Each module renders a chart area, summary metrics, and an export entry point.",
-          "Figure export supports image-oriented outputs, while data export provides normalized tables in CSV or TXT form for downstream statistical work, reporting, or archiving."
+          "After the upload context is ready, open an analysis module in the sidebar and run it with the current settings. Genome Browser and Structure first map the selected BED file to transcript coordinates, while the statistical modules run directly from the shared upload context.",
+          "Figure export supports image-oriented outputs, while supported statistical modules also provide normalized tables in CSV or TXT form for downstream work. Structure uses PNG resolution multipliers and vector PDF export, and Genome Browser provides its own Save Image dialog inside the IGV workspace."
         ]
       }
     ]
@@ -140,7 +142,7 @@ export const helpContentCore: HelpPage[] = [
       {
         title: "How Upload / Run supports the rest of the app",
         paragraphs: [
-          "Meta Plot, Peak Distribution, Gene Statistics, Exon Statistics, and Site all read from the upload session prepared here. If Upload / Run is incomplete or inconsistent, the later modules will either fail or produce outputs that are difficult to trust.",
+          "Genome Browser, Structure, Meta Plot, Peak Distribution, Gene Statistics, Exon Statistics, and Site all read from the upload session prepared here. Genome Browser and Structure additionally let you select which uploaded BED file to map. If Upload / Run is incomplete or inconsistent, the later modules will either fail or produce outputs that are difficult to trust.",
           "In practice, Upload / Run is the place to slow down and confirm that the desktop session truly matches the biological question you want to answer."
         ]
       }

@@ -2,6 +2,7 @@
 @import "./styles/app-shell.css";
 @import "./styles/common-module.css";
 @import "./styles/common-data.css";
+@import "./styles/setup-ui.css";
 @import "./styles/upload-ui.css";
 @import "./styles/analysis-ui.css";
 @import "./styles/export-modal.css";
@@ -10,4 +11,7 @@
 @import "./styles/peak-gene-size.css";
 @import "./styles/gene-matrix.css";
 @import "./styles/site-profile.css";
+@import "./styles/analysis-modules.css";
+@import "./styles/structure.css";
 @import "./styles/help.css";
+@import "./styles/genome-browser.css";

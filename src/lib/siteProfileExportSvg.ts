@@ -101,7 +101,7 @@ export function appendTextNode(input: {
   node.setAttribute("font-weight", input.style.fontWeight || "700");
   node.setAttribute(
     "font-family",
-    input.style.fontFamily || '"Montserrat", sans-serif'
+    input.style.fontFamily || "sans-serif"
   );
   node.setAttribute("text-anchor", anchor);
   node.textContent = input.text;

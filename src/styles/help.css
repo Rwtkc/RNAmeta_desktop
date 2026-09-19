@@ -28,7 +28,7 @@
   width: 100%;
   padding: 14px 16px;
   border: 1px solid var(--app-border);
-  border-radius: 14px;
+  border-radius: var(--app-radius-inner);
   background: var(--app-surface-soft);
   text-align: left;
   transition:
@@ -77,6 +77,20 @@
   color: var(--app-text);
 }
 
+.help-page__link {
+  color: var(--ribo-primary-deep);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: rgba(101, 121, 91, 0.45);
+  text-underline-offset: 0.16em;
+}
+
+.help-page__link:hover,
+.help-page__link:focus-visible {
+  color: var(--ribo-accent-warm-deep);
+  text-decoration-color: currentColor;
+}
+
 .help-page__list-grid {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   margin-top: 18px;
@@ -85,7 +99,7 @@
 .help-page__list-card {
   padding: 14px 16px;
   border: 1px solid var(--app-border);
-  border-radius: 14px;
+  border-radius: var(--app-radius-inner);
   background: rgba(255, 253, 248, 0.72);
 }
 
@@ -94,7 +108,6 @@
   margin-bottom: 10px;
   font-size: 0.72rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ribo-primary-deep);
 }

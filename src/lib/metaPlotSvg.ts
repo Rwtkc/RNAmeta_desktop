@@ -15,7 +15,7 @@ export const META_PLOT_HEIGHT = 470;
 export const META_PLOT_PANEL_FILL = "#EBEBEB";
 export const META_PLOT_GRID_COLOR = "rgba(255,255,255,0.95)";
 export const META_PLOT_AXIS_COLOR = "#4c4c4c";
-export const META_PLOT_FONT_FAMILY = `"Montserrat", "PingFang SC", "Microsoft YaHei", sans-serif`;
+export const META_PLOT_FONT_FAMILY = "sans-serif";
 
 export {
   buildMetaPlotCiAreaPath,

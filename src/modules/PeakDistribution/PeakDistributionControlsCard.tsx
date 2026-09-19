@@ -66,14 +66,6 @@ export function PeakDistributionControlsCard({
         </section>
       </div>
 
-      {!canRunAnalysis ? (
-        <div className="inline-alert inline-alert--warning">
-          <span>
-            Complete Project Status validation and upload at least one BED file in Upload / Run
-            to enable analysis.
-          </span>
-        </div>
-      ) : null}
     </section>
   );
 }

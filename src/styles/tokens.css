@@ -23,8 +23,10 @@
   --app-shadow: 0 0.75rem 1.875rem rgba(58, 49, 38, 0.08);
   --app-danger: #dc2626;
   --app-warning: #d97706;
-  --app-body-font: "Montserrat", "Segoe UI", sans-serif;
-  --app-display-font: "Archivo Black", "Montserrat", sans-serif;
+  --app-radius-outer: 1rem;
+  --app-radius-inner: 0.6rem;
+  --app-body-font: sans-serif;
+  --app-display-font: sans-serif;
   font-family: var(--app-body-font);
 }
 

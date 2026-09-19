@@ -4,6 +4,8 @@ portable-dist/
 src-tauri/target/
 src-tauri/Cargo.lock
 r-lang/
+rnametadir/
+external/
 tmp/
 rollout-*.jsonl
 .vscode/

@@ -1,7 +1,7 @@
 .meta-plot-stage__figure {
   overflow: hidden;
   border: 2px solid var(--app-border);
-  border-radius: 16px;
+  border-radius: var(--app-radius-inner);
   background: #f6f6ef;
   padding: 18px;
 }
@@ -54,7 +54,7 @@
   pointer-events: none;
   padding: 12px 14px;
   border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 14px;
+  border-radius: var(--app-radius-inner);
   background: rgba(255, 252, 246, 0.98);
   box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
   color: #111827;

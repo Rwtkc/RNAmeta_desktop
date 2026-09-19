@@ -3,6 +3,26 @@ import { BookOpenText, LifeBuoy, ListTree } from "lucide-react";
 import { HELP_PAGE_MAP } from "./helpContent";
 import { HELP_NAV_CHILDREN, type HelpPageId } from "./helpModuleDefinitions";
 
+const HELP_URL_PATTERN = /(https?:\/\/[^\s,;]+)/g;
+
+function renderHelpText(text: string) {
+  return text.split(HELP_URL_PATTERN).map((part, index) =>
+    part.startsWith("http://") || part.startsWith("https://") ? (
+      <a
+        key={`${part}-${index}`}
+        className="help-page__link"
+        href={part}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
+
 interface HelpModuleProps {
   activePage: HelpPageId;
   onNavigate: (pageId: HelpPageId) => void;
@@ -98,7 +118,7 @@ export function HelpModule({ activePage, onNavigate }: HelpModuleProps) {
 
             <div className="help-page__prose">
               {section.paragraphs.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
+                <p key={paragraph}>{renderHelpText(paragraph)}</p>
               ))}
             </div>
 
@@ -109,7 +129,7 @@ export function HelpModule({ activePage, onNavigate }: HelpModuleProps) {
                     <strong>{list.label}</strong>
                     <ul>
                       {list.items.map((item) => (
-                        <li key={item}>{item}</li>
+                        <li key={item}>{renderHelpText(item)}</li>
                       ))}
                     </ul>
                   </div>

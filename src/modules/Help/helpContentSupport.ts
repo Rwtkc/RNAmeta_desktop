@@ -11,7 +11,7 @@ export const helpContentSupport: HelpPage[] = [
         title: "Figure export",
         paragraphs: [
           "Each analysis module exposes an export panel inside the module workspace. Figure export is intended for chart-oriented outputs such as presentation figures, supplemental images, or PDF-ready graphics.",
-          "Use figure export when the immediate goal is visual communication, manuscript assembly, slide preparation, or preserving the rendered chart exactly as seen in the desktop client."
+          "Use figure export when the immediate goal is visual communication, manuscript assembly, slide preparation, or preserving the rendered chart exactly as seen in the desktop client. Structure PNG export uses 2×, 3×, or 4× resolution, while Structure PDF is vector-based and does not require a multiplier. Genome Browser image export is available from Save Image inside the IGV toolbar."
         ]
       },
       {
@@ -35,7 +35,7 @@ export const helpContentSupport: HelpPage[] = [
         title: "Session cache behavior",
         paragraphs: [
           "RNAmeta Desktop uses a session-scoped cache to speed up repeated analysis within the current application run. The cache is temporary and is stored in the local application cache area rather than the project directory.",
-          "This cache is designed for workflow acceleration, not long-term result storage. It is cleaned with the application session lifecycle, so you should not treat it as a permanent output location."
+          "Genome Browser and Structure also keep separate in-memory results for each selected BED file. Switching pages preserves the mounted module, and switching back to an analyzed BED restores its mapping table and rendered result. This cache is designed for workflow acceleration, not long-term result storage."
         ],
         lists: [
           {
@@ -51,8 +51,8 @@ export const helpContentSupport: HelpPage[] = [
       {
         title: "Console and process control",
         paragraphs: [
-          "The bottom console shows runtime logs and process state. When an analysis is actively running, the console exposes a terminate action that stops the current local process tree.",
-          "If you terminate a run, the module can briefly show an Aborted state before the status clears automatically. This is normal and is meant to acknowledge the interruption without leaving a permanent stale error on the page."
+          "The bottom console shows runtime logs and process state. Starting a local analysis automatically expands the console. When all processes finish successfully, the console collapses automatically; when a command or result-processing step fails, it remains open so the error is visible.",
+          "While an analysis is active, Terminate stops the current local process tree. An aborted run is treated as a failure and leaves the console expanded for inspection."
         ]
       }
     ]
@@ -66,8 +66,22 @@ export const helpContentSupport: HelpPage[] = [
       {
         title: "The module shows old-looking results after I changed something",
         paragraphs: [
-          "If you re-upload BED files, the client clears the previous module results. If you change species or annotation directory, it also invalidates old analysis results. This behavior is intentional and protects you from reading charts tied to the wrong biological context.",
-          "If a page still looks inconsistent, rerun the module after checking Project Configuration and Upload / Run."
+          "Genome Browser and Structure cache results separately for each BED file during the current application session. Switching BED files can therefore restore a previous result for that same file, while changing species or annotation directory clears the cache because the biological reference has changed.",
+          "Other analysis modules reset when the upload context changes. If a page still looks inconsistent, verify the active BED selection, Project Configuration, and Upload / Run context before rerunning."
+        ]
+      },
+      {
+        title: "Genome Browser or Structure disappeared after I changed pages",
+        paragraphs: [
+          "Genome Browser and Structure remain mounted after their first visit. Switching sidebar pages hides them without discarding their current tables, selected transcripts, IGV workspace, or folded structure.",
+          "If a result is no longer present, check whether the selected BED, species, or annotation directory changed. Those inputs determine which cached result is valid."
+        ]
+      },
+      {
+        title: "Does Structure require internet access",
+        paragraphs: [
+          "No. RNAmeta Desktop includes a local RNAfold runtime and performs transcript folding offline. The reference FASTA, FAI, and GFF3 resources must already exist in the validated annotation directory.",
+          "If folding fails, inspect the expanded console and confirm that Project Configuration is valid before rerunning the selected transcript row."
         ]
       },
       {
@@ -80,7 +94,7 @@ export const helpContentSupport: HelpPage[] = [
       {
         title: "I cannot find a website feature inside the desktop app",
         paragraphs: [
-          "The desktop app and the website share the RNAmeta project identity, but they do not expose exactly the same screens. The website is a valid project reference at https://rnainformatics.cn/RNAmeta/, yet some workflows shown there may not exist in the current local desktop build.",
+          "The desktop app and the website share the RNAmeta project identity, but they do not expose exactly the same screens. The website is a valid project reference at https://rnainformatics.cn/RNAmeta-online/, yet some workflows shown there may not exist in the current local desktop build.",
           "In particular, if you are looking for Motif job submission, treat that as a web-platform workflow rather than a currently available desktop page."
         ]
       },
@@ -94,7 +108,7 @@ export const helpContentSupport: HelpPage[] = [
       {
         title: "Where should I go for broader project context",
         paragraphs: [
-          "Use this desktop Help group for client-specific operational guidance. Use the public project site at https://rnainformatics.cn/RNAmeta/ when you want the broader RNAmeta presentation, external project framing, or a web-based reference point.",
+          "Use this desktop Help group for client-specific operational guidance. Use the public project site at https://rnainformatics.cn/RNAmeta-online/ when you want the broader RNAmeta presentation, external project framing, or a web-based reference point.",
           "When there is any conflict between a desktop interaction you can see and older descriptive wording elsewhere, follow the current desktop behavior."
         ]
       }

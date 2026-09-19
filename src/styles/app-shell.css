@@ -22,23 +22,42 @@
 .app-sidebar__brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 22px 20px 22px 18px;
+  gap: 10px;
+  min-width: 0;
+  padding: 18px 16px;
   border-bottom: 1px solid var(--app-border-soft);
   font-family: var(--app-display-font);
-  font-size: 1.42rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.02em;
   color: var(--app-text);
+  white-space: nowrap;
 }
 
 .app-sidebar__brand-icon {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   object-fit: contain;
-  border-radius: 10px;
+  border-radius: var(--app-radius-inner);
+}
+
+.app-sidebar__brand-copy {
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32rem;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.app-sidebar__brand-copy strong {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--app-text);
+}
+
+.app-sidebar__brand-copy > span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--app-muted);
 }
 
 .app-sidebar__nav {
@@ -144,19 +163,6 @@
   background: var(--app-sidebar-active);
 }
 
-.app-sidebar__status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 24px;
-  border-top: 1px solid var(--app-border-soft);
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--app-muted);
-}
-
 .status-dot {
   width: 6px;
   height: 6px;
@@ -202,23 +208,18 @@
 .workspace-breadcrumb {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--app-placeholder);
-}
-
-.workspace-breadcrumb svg,
-.workspace-breadcrumb strong {
-  color: var(--ribo-primary);
+  gap: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: none;
+  color: var(--app-muted);
 }
 
 .workspace-breadcrumb strong {
-  font-family: var(--app-display-font);
-  font-weight: 400;
-  letter-spacing: 0.04em;
+  color: var(--ribo-primary-deep);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
 }
 
 .app-workspace__main {
@@ -241,7 +242,11 @@
 }
 
 .app-workspace__inner {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 100%;
+  overflow-x: hidden;
   padding: 32px;
 }
 

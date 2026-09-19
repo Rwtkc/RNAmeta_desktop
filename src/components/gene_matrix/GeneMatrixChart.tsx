@@ -9,7 +9,7 @@ import type { GeneMatrixPayload } from "@/types/native";
 
 const WIDTH = 1120;
 const HEIGHT = 700;
-const FONT_FAMILY = '"Montserrat", "PingFang SC", "Microsoft YaHei", sans-serif';
+const FONT_FAMILY = "sans-serif";
 const SAMPLE_COLORS = ["#d94841", "#2563eb", "#f59e0b", "#0f9d78", "#7c3aed"];
 const MARGIN = { top: 52, right: 40, bottom: 54, left: 40 };
 const TOP_BAR_HEIGHT = 250;

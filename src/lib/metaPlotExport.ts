@@ -1,23 +1,9 @@
 import { jsPDF } from "jspdf";
-import * as opentype from "opentype.js";
 import { svg2pdf } from "svg2pdf.js";
-import montserrat400Woff from "@fontsource/montserrat/files/montserrat-latin-400-normal.woff";
-import montserrat500Woff from "@fontsource/montserrat/files/montserrat-latin-500-normal.woff";
-import montserrat600Woff from "@fontsource/montserrat/files/montserrat-latin-600-normal.woff";
-import montserrat700Woff from "@fontsource/montserrat/files/montserrat-latin-700-normal.woff";
-import montserrat800Woff from "@fontsource/montserrat/files/montserrat-latin-800-normal.woff";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const EXPORT_BACKGROUND = "#fffdf8";
 const PNG_SIGNATURE = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
-const FONT_ASSETS = {
-  montserrat400: montserrat400Woff,
-  montserrat500: montserrat500Woff,
-  montserrat600: montserrat600Woff,
-  montserrat700: montserrat700Woff,
-  montserrat800: montserrat800Woff
-} as const;
-const fontPromises = new Map<string, Promise<any>>();
 
 function parseSvgMarkup(svgMarkup: string) {
   const documentNode = new DOMParser().parseFromString(svgMarkup, "image/svg+xml");
@@ -50,6 +36,10 @@ function getSvgIntrinsicSize(svgNode: SVGSVGElement) {
   throw new Error("Meta Plot export SVG does not expose a valid size.");
 }
 
+export function getSvgMarkupIntrinsicSize(svgMarkup: string) {
+  return getSvgIntrinsicSize(parseSvgMarkup(svgMarkup));
+}
+
 function getSvgTargetSize(svgNode: SVGSVGElement) {
   const width = Number(svgNode.getAttribute("width"));
   const height = Number(svgNode.getAttribute("height"));
@@ -75,7 +65,10 @@ function cloneSvgNodeForExport(
   clone.setAttribute("width", `${width}`);
   clone.setAttribute("height", `${height}`);
   clone.setAttribute("viewBox", `0 0 ${intrinsic.width} ${intrinsic.height}`);
-  clone.setAttribute("preserveAspectRatio", "none");
+  clone.setAttribute(
+    "preserveAspectRatio",
+    svgNode.getAttribute("preserveAspectRatio") || "none"
+  );
 
   const background = clone.ownerDocument.createElementNS(SVG_NS, "rect");
   background.setAttribute("x", "0");
@@ -244,177 +237,6 @@ function addPngDpiMetadata(pngBytes: Uint8Array, dpi: number) {
   ]);
 }
 
-function parseStyleAttribute(styleText: string | null) {
-  return String(styleText || "")
-    .split(";")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .reduce<Record<string, string>>((accumulator, entry) => {
-      const splitIndex = entry.indexOf(":");
-      if (splitIndex === -1) {
-        return accumulator;
-      }
-
-      const key = entry.slice(0, splitIndex).trim();
-      const value = entry.slice(splitIndex + 1).trim();
-      accumulator[key] = value;
-      return accumulator;
-    }, {});
-}
-
-function getSvgTextValue(node: Element, name: string) {
-  let current: Element | null = node;
-
-  while (current) {
-    const explicit = current.getAttribute(name);
-    if (explicit != null) {
-      return explicit;
-    }
-
-    const styleMap = parseStyleAttribute(current.getAttribute("style"));
-    if (styleMap[name] != null) {
-      return styleMap[name];
-    }
-
-    current = current.parentElement;
-  }
-
-  return null;
-}
-
-function parseSvgLength(value: string | null, fontSize: number) {
-  if (value == null || value === "") {
-    return 0;
-  }
-
-  const text = String(value).trim();
-  const numeric = Number.parseFloat(text);
-  if (!Number.isFinite(numeric)) {
-    return 0;
-  }
-
-  if (text.endsWith("em")) {
-    return numeric * fontSize;
-  }
-
-  return numeric;
-}
-
-function normalizeFontWeight(value: string | null) {
-  const numeric = Number.parseInt(String(value || "400"), 10);
-  if (Number.isNaN(numeric)) {
-    return 400;
-  }
-  if (numeric >= 750) {
-    return 800;
-  }
-  if (numeric >= 650) {
-    return 700;
-  }
-  if (numeric >= 550) {
-    return 600;
-  }
-  if (numeric >= 450) {
-    return 500;
-  }
-  return 400;
-}
-
-function resolveFontKey(node: Element) {
-  return `montserrat${normalizeFontWeight(getSvgTextValue(node, "font-weight"))}`;
-}
-
-function resolveBaselineOffset(font: any, fontSize: number, baseline: string | null) {
-  const units = font.unitsPerEm || 1000;
-  const ascender = font.ascender || 0;
-  const descender = font.descender || 0;
-  const normalized = String(baseline || "alphabetic").toLowerCase();
-
-  if (normalized === "middle" || normalized === "central") {
-    return (((ascender + descender) / 2) / units) * fontSize;
-  }
-
-  return 0;
-}
-
-function loadFontByKey(fontKey: keyof typeof FONT_ASSETS) {
-  if (!fontPromises.has(fontKey)) {
-    const assetUrl = FONT_ASSETS[fontKey];
-    fontPromises.set(
-      fontKey,
-      fetch(assetUrl)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to load Meta Plot export font.");
-          }
-          return response.arrayBuffer();
-        })
-        .then((buffer) => opentype.parse(buffer))
-    );
-  }
-
-  return fontPromises.get(fontKey)!;
-}
-
-async function convertTextToPaths(svgRoot: SVGSVGElement) {
-  const textNodes = Array.from(svgRoot.querySelectorAll("text")).filter((node) =>
-    String(node.textContent || "").trim()
-  );
-
-  if (!textNodes.length) {
-    return;
-  }
-
-  const uniqueFontKeys = [
-    ...new Set(textNodes.map((node) => resolveFontKey(node) as keyof typeof FONT_ASSETS))
-  ];
-  const fonts = Object.fromEntries(
-    await Promise.all(
-      uniqueFontKeys.map(async (fontKey) => [fontKey, await loadFontByKey(fontKey)])
-    )
-  ) as Record<keyof typeof FONT_ASSETS, any>;
-
-  textNodes.forEach((node) => {
-    const text = String(node.textContent || "");
-    const font = fonts[resolveFontKey(node) as keyof typeof FONT_ASSETS];
-    const fontSize = Number.parseFloat(getSvgTextValue(node, "font-size") || "16");
-    const anchor = String(getSvgTextValue(node, "text-anchor") || "start").toLowerCase();
-    const baseline = String(
-      getSvgTextValue(node, "dominant-baseline") || "alphabetic"
-    ).toLowerCase();
-    let x = Number.parseFloat(node.getAttribute("x") || "0");
-    let y = Number.parseFloat(node.getAttribute("y") || "0");
-    x += parseSvgLength(node.getAttribute("dx"), fontSize);
-    y += parseSvgLength(node.getAttribute("dy"), fontSize);
-    const advance = font.getAdvanceWidth(text, fontSize);
-
-    if (anchor === "middle") {
-      x -= advance / 2;
-    } else if (anchor === "end") {
-      x -= advance;
-    }
-
-    y += resolveBaselineOffset(font, fontSize, baseline);
-
-    const pathNode = svgRoot.ownerDocument.createElementNS(SVG_NS, "path");
-    pathNode.setAttribute("d", font.getPath(text, x, y, fontSize).toPathData(2));
-    pathNode.setAttribute("fill", getSvgTextValue(node, "fill") || "#22301f");
-    pathNode.setAttribute("stroke", "none");
-
-    const transform = node.getAttribute("transform");
-    if (transform) {
-      pathNode.setAttribute("transform", transform);
-    }
-
-    const opacity = getSvgTextValue(node, "opacity");
-    if (opacity != null) {
-      pathNode.setAttribute("opacity", opacity);
-    }
-
-    node.replaceWith(pathNode);
-  });
-}
-
 async function canvasToPngBytes(canvas: HTMLCanvasElement, dpi = 300) {
   const blob = await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((nextBlob) => {
@@ -450,8 +272,6 @@ export async function buildMetaPlotPdfBytes(
   const { width: exportWidth, height: exportHeight } = getSvgTargetSize(svgNode);
   const pdfWidthPt = (exportWidth / dpi) * 72;
   const pdfHeightPt = (exportHeight / dpi) * 72;
-
-  await convertTextToPaths(svgNode);
 
   const pdf = new jsPDF({
     orientation: pdfWidthPt >= pdfHeightPt ? "landscape" : "portrait",
