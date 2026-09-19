@@ -16,7 +16,7 @@ Online RNAmeta workspace: [https://rnainformatics.cn/RNAmeta-online/](https://rn
 
 Download the latest Windows packages from the [v1.0.0 Release](https://github.com/Rwtkc/RNAmeta_desktop/releases/tag/v1.0.0):
 
-- [RNAmeta-desktop-portable-2026-09-19.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.0/RNAmeta-desktop-portable-2026-09-19.zip) — complete portable Windows application.
-- [RNAmeta-Arabidopsis-TAIR10-test-data-2026-09-19.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.0/RNAmeta-Arabidopsis-TAIR10-test-data-2026-09-19.zip) — TAIR10 annotation, Genome Browser / Structure reference tracks, and example BED files.
+- [RNAmeta-desktop-portable-v1.0.0-2026-09-19.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.0/RNAmeta-desktop-portable-v1.0.0-2026-09-19.zip) — complete portable Windows application.
+- [RNAmeta-Arabidopsis-TAIR10-test-data-v1.0.0-2026-09-19.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.0/RNAmeta-Arabidopsis-TAIR10-test-data-v1.0.0-2026-09-19.zip) — TAIR10 annotation, Genome Browser / Structure reference tracks, and example BED files.
 
 Extract the portable application ZIP and keep the `resources` directory next to `RNAmeta.exe`.
