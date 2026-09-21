@@ -5,7 +5,7 @@ import { readFile, readTextFile, writeFile, writeTextFile } from "@tauri-apps/pl
 import { SPECIES_OPTIONS } from "@/data/species";
 import { useRAnalysis } from "@/hooks/useRAnalysis";
 import { resolveSessionCachePath } from "@/lib/sessionCache";
-import { inspectTair10Reference } from "@/modules/GenomeBrowser/genomeBrowserReference";
+import { inspectGenomeReference } from "@/modules/GenomeBrowser/genomeBrowserReference";
 import { normalizeGenomeBrowserEngineLine } from "@/modules/GenomeBrowser/genomeBrowserRuntime";
 import type { BedRow, GenomeReferenceState } from "@/modules/GenomeBrowser/genomeBrowserTypes";
 import { useAppStore } from "@/store/useAppStore";
@@ -47,7 +47,7 @@ export function useStructureWorkflow() {
     () => SPECIES_OPTIONS.find((option) => option.label === species) ?? null,
     [species]
   );
-  const isTair10 = selectedSpecies?.id === "ara_TAIR10";
+  const selectedSpeciesId = selectedSpecies?.id ?? "";
 
   useEffect(() => {
     if (!bedPath || !analysisFiles.includes(bedPath)) setBedPath(analysisFiles[0] || "");
@@ -86,17 +86,17 @@ export function useStructureWorkflow() {
     setMappingCachePath("");
     setMappingGffPath("");
     setError("");
-    if (!annotationDir || !isTair10) {
+    if (!annotationDir || !selectedSpeciesId) {
       setReference(null);
       return () => { cancelled = true; };
     }
-    void inspectTair10Reference(annotationDir).then((state) => {
+    void inspectGenomeReference(annotationDir, selectedSpeciesId).then((state) => {
       if (!cancelled) setReference(state);
     }).catch((cause) => {
       if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
     });
     return () => { cancelled = true; };
-  }, [annotationDir, isTair10]);
+  }, [annotationDir, selectedSpeciesId]);
 
   async function runMapping() {
     if (isRunning || isMapping || !bedPath) return;
@@ -107,18 +107,19 @@ export function useStructureWorkflow() {
     setResult(null);
     setError("");
     try {
-      if (!isTair10) throw new Error("Structure currently supports Arabidopsis thaliana (TAIR10). ");
+      if (!selectedSpeciesId) throw new Error("Please select a supported species before running Structure.");
       if (!annotationValidation?.isValid || !annotationDir) {
         throw new Error("Complete Project Configuration validation before running Structure.");
       }
-      const state = await inspectTair10Reference(annotationDir);
+      const state = await inspectGenomeReference(annotationDir, selectedSpeciesId);
       setReference(state);
-      if (state.missing.length) throw new Error(`TAIR10 reference files are missing: ${state.missing.join(", ")}`);
+      if (state.missing.length) throw new Error(`Reference files are missing: ${state.missing.join(", ")}`);
       const runId = `structure-map-${Date.now()}`;
       const requestPath = await resolveSessionCachePath(await join("structure", `${runId}.request.json`));
       const responsePath = await resolveSessionCachePath(await join("structure", `${runId}.response.json`));
       const stagedBedPath = await resolveSessionCachePath(await join("structure", `${runId}.bed`));
-      const stagedGffPath = await resolveSessionCachePath(await join("structure", `${runId}.gff3.gz`));
+      const annotationSuffix = state.files.gff3.toLowerCase().endsWith(".gz") ? ".annotation.gz" : ".annotation.gtf";
+      const stagedGffPath = await resolveSessionCachePath(await join("structure", `${runId}${annotationSuffix}`));
       const cachePath = await resolveSessionCachePath(await join("structure", `${runId}.transcript-cache.rds`));
       const runnerPath = await invoke<string>("resolve_resource_path", { relativePath: "scripts/genome_browser_mapping_runner.R" });
       await writeFile(stagedBedPath, await readFile(bedPath));
@@ -154,7 +155,7 @@ export function useStructureWorkflow() {
     setError("");
     setIsFolding(true);
     try {
-      if (!reference || reference.missing.length) throw new Error("TAIR10 reference files are not ready.");
+      if (!reference || reference.missing.length) throw new Error("Reference files are not ready.");
       const runId = `structure-fold-${Date.now()}`;
       const workspaceRequest = await resolveSessionCachePath(await join("structure", `${runId}.workspace.request.json`));
       const workspaceResponse = await resolveSessionCachePath(await join("structure", `${runId}.workspace.response.json`));
@@ -216,6 +217,6 @@ export function useStructureWorkflow() {
     analysisFiles, bedPath, setBedPath, reference, rows, selectedRow, setSelectedRow,
     result, setResult, mappingCachePath, mappingGffPath, hasMapped, isMapping,
     isFolding, setIsFolding, error, setError, isRunning, runShellCommand, addLog,
-    isTair10, annotationDir, annotationValidation, runMapping, runStructure
+    selectedSpeciesId, annotationDir, annotationValidation, runMapping, runStructure
   };
 }

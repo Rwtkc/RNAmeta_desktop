@@ -46,7 +46,7 @@ export function StructureModule() {
   const [exportScale, setExportScale] = useState(3);
   const [pendingRow, setPendingRow] = useState<BedRow | null>(null);
   const canMap = Boolean(
-    workflow.annotationValidation?.isValid && workflow.bedPath && workflow.isTair10
+    workflow.annotationValidation?.isValid && workflow.bedPath && workflow.selectedSpeciesId
   );
 
   async function exportFigure() {
@@ -96,7 +96,7 @@ export function StructureModule() {
     </div>
 
     {!canMap ? <div className="inline-alert inline-alert--warning">
-      Complete Project Configuration for TAIR10 and upload at least one BED file to enable Structure.
+      Complete Project Configuration and upload at least one BED file to enable Structure.
     </div> : null}
 
     <BedFileSelector

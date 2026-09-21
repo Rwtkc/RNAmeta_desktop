@@ -5,12 +5,14 @@ req <- jsonlite::fromJSON(request_path)
 write_result <- function(value) jsonlite::write_json(value, response_path, auto_unbox = TRUE, dataframe = "rows", na = "null")
 fail <- function(message) { write_result(list(status = "error", message = message, rows = list())); quit(save = "no", status = 0) }
 progress <- function(value, detail) message(sprintf("[genome-browser-mapping][%s%%] %s", value, detail))
-progress(5, "Validating staged BED and TAIR10 annotation inputs")
+progress(5, "Validating staged BED and annotation inputs")
 if (!requireNamespace("data.table", quietly = TRUE)) fail("R package data.table is unavailable.")
 bed_path <- req$bedPath; gff_path <- req$gffPath
-if (!file.exists(bed_path) || !file.exists(gff_path)) fail("BED or GFF3 file is missing.")
+if (!file.exists(bed_path) || !file.exists(gff_path)) fail("BED or annotation file is missing.")
 read_gff <- function(path) {
-  lines <- readLines(gzfile(path), warn = FALSE)
+  connection <- if (grepl("\\.gz$", path, ignore.case = TRUE)) gzfile(path) else file(path)
+  on.exit(close(connection), add = TRUE)
+  lines <- readLines(connection, warn = FALSE)
   lines <- lines[nzchar(lines) & !startsWith(lines, "#")]
   if (!length(lines)) return(data.table::data.table())
   x <- data.table::fread(text = paste(lines, collapse = "\n"), sep = "\t", header = FALSE, quote = "", fill = TRUE, data.table = TRUE)
@@ -18,12 +20,20 @@ read_gff <- function(path) {
   x
 }
 parse_attr <- function(value, key) {
-  hit <- regmatches(value, regexec(paste0("(?:^|;)", key, "=([^;]+)"), value, perl = TRUE))
-  vapply(hit, function(m) if (length(m) > 1) m[[2]] else "", character(1))
+  gff_hit <- regmatches(value, regexec(paste0("(?:^|;)\\s*", key, "=([^;]+)"), value, perl = TRUE))
+  gff_value <- vapply(gff_hit, function(m) if (length(m) > 1) m[[2]] else "", character(1))
+  gtf_hit <- regmatches(value, regexec(paste0('(?:^|;)\\s*', key, '\\s+"([^\"]+)"'), value, perl = TRUE))
+  gtf_value <- vapply(gtf_hit, function(m) if (length(m) > 1) m[[2]] else "", character(1))
+  ifelse(nzchar(gff_value), gff_value, gtf_value)
 }
-progress(15, "Loading TAIR10 GFF3 annotation records")
+first_attr <- function(value, primary, fallback) {
+  primary_value <- parse_attr(value, primary)
+  fallback_value <- parse_attr(value, fallback)
+  ifelse(nzchar(primary_value), primary_value, fallback_value)
+}
+progress(15, "Loading transcript annotation records")
 gff <- read_gff(gff_path)
-if (!nrow(gff)) fail("GFF3 contains no records.")
+if (!nrow(gff)) fail("Annotation contains no records.")
 canonical_chr <- function(value) {
   value <- as.character(value)
   value <- sub("^chr", "", value, ignore.case = TRUE)
@@ -33,11 +43,11 @@ gff[, seqid := canonical_chr(seqid)]
 gff[, `:=`(start = as.integer(start), end = as.integer(end))]
 tx <- gff[type %in% c("mRNA", "transcript")]
 ex <- gff[type == "exon"]
-if (!nrow(tx) || !nrow(ex)) fail("GFF3 has no transcript/exon records.")
-tx[, transcript_id := parse_attr(attributes, "ID")]
+if (!nrow(tx) || !nrow(ex)) fail("Annotation has no transcript/exon records.")
+tx[, transcript_id := first_attr(attributes, "ID", "transcript_id")]
 tx[, transcript_id := sub("^transcript:", "", transcript_id)]
-tx[, gene_id := parse_attr(attributes, "Parent")]
-ex[, transcript_id := parse_attr(attributes, "Parent")]
+tx[, gene_id := first_attr(attributes, "Parent", "gene_id")]
+ex[, transcript_id := first_attr(attributes, "Parent", "transcript_id")]
 ex[, transcript_id := sub("^transcript:", "", transcript_id)]
 ex <- ex[nzchar(transcript_id)]
 ex <- merge(ex[, .(seqid, start, end, strand, transcript_id)], tx[, .(transcript_id, gene_id)], by = "transcript_id", all.x = TRUE)
@@ -51,7 +61,7 @@ workspace_cache_path <- if ("workspaceCachePath" %in% names(req)) as.character(r
 if (nzchar(workspace_cache_path)) {
   dir.create(dirname(workspace_cache_path), recursive = TRUE, showWarnings = FALSE)
   cds_cache <- gff[type == "CDS", .(seqid, start, end, strand, attributes)]
-  if (nrow(cds_cache)) cds_cache[, transcript_id := sub("^transcript:", "", parse_attr(attributes, "Parent"))]
+  if (nrow(cds_cache)) cds_cache[, transcript_id := sub("^transcript:", "", first_attr(attributes, "Parent", "transcript_id"))]
   saveRDS(list(exons = ex[, .(seqid, start, end, strand, transcript_id, exon_width, cumulative_before, transcript_length)], cds = cds_cache), workspace_cache_path)
 }
 progress(58, "Caching transcript annotations for fast IGV workspace loading")

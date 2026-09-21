@@ -10,16 +10,27 @@ export const helpContentGenome: HelpPage[] = [
       {
         title: "Before running Genome Browser",
         paragraphs: [
-          "Genome Browser currently supports Arabidopsis thaliana with the TAIR10 reference bundle. Complete Project Configuration validation and upload at least one BED file before starting the mapping workflow.",
-          "The selected annotation directory must contain the TAIR10 genomic FASTA, its FAI index, and the expected compressed GFF3 file. The module reports a readiness warning when the reference context or BED input is incomplete."
+          "Genome Browser supports species with a complete local annotation bundle. Complete Project Configuration validation and upload at least one BED file before starting the mapping workflow.",
+          "Place the six files for the selected species directly in the annotation directory. The module reports a readiness warning when the reference context or BED input is incomplete."
         ],
         lists: [
           {
-            label: "Required TAIR10 files",
+            label: "Required files for <species ID>",
             items: [
-              "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa",
-              "Arabidopsis_thaliana.TAIR10.dna.toplevel.fa.fai",
-              "Arabidopsis_thaliana.TAIR10.51.gff3.gz"
+              "<species ID>.txdb.sqlite",
+              "<species ID>.txlens.rda",
+              "<species ID>.gff.rda",
+              "<species ID>.fa",
+              "<species ID>.fa.fai",
+              "<species ID>.annotation.gtf"
+            ]
+          },
+          {
+            label: "Verified reference bundles",
+            items: [
+              "Arabidopsis thaliana (ara_TAIR10)",
+              "Oryza sativa (osa_IRGSP_1)",
+              "The legacy TAIR10 FASTA, FAI, and compressed GFF3 names remain supported."
             ]
           }
         ]
@@ -77,7 +88,7 @@ export const helpContentGenome: HelpPage[] = [
       {
         title: "Before running Structure",
         paragraphs: [
-          "Structure currently uses the same TAIR10 reference requirements as Genome Browser. Complete Project Configuration validation, upload a BED file, and select the intended BED input before running transcript mapping.",
+          "Structure uses the same selected-species reference bundle as Genome Browser. Complete Project Configuration validation, upload a BED file, and select the intended BED input before running transcript mapping.",
           "RNAfold is bundled with RNAmeta Desktop and runs locally. The folding step does not require an internet connection or a separately installed ViennaRNA environment."
         ]
       },

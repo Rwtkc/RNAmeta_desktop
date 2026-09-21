@@ -8,7 +8,7 @@ import { SPECIES_OPTIONS } from "@/data/species";
 import { useAppStore } from "@/store/useAppStore";
 import { GenomeBrowserViewport } from "./GenomeBrowserViewport";
 import { GenomeBrowserTable } from "./GenomeBrowserTable";
-import { inspectTair10Reference } from "./genomeBrowserReference";
+import { inspectGenomeReference } from "./genomeBrowserReference";
 import { normalizeGenomeBrowserEngineLine } from "./genomeBrowserRuntime";
 import { useRAnalysis } from "@/hooks/useRAnalysis";
 import { resolveSessionCachePath } from "@/lib/sessionCache";
@@ -55,8 +55,8 @@ export function GenomeBrowserModule() {
     () => SPECIES_OPTIONS.find((option) => option.label === species) ?? null,
     [species]
   );
-  const isTair10 = selectedSpecies?.id === "ara_TAIR10";
-  const isReadyToRun = Boolean(annotationValidation?.isValid && bedPath && isTair10);
+  const selectedSpeciesId = selectedSpecies?.id ?? "";
+  const isReadyToRun = Boolean(annotationValidation?.isValid && bedPath && selectedSpeciesId);
 
   useEffect(() => {
     if (!bedPath || !bedFiles.includes(bedPath)) setBedPath(bedFiles[0] || "");
@@ -97,12 +97,12 @@ export function GenomeBrowserModule() {
     setMappingGffPath("");
     setError("");
 
-    if (!annotationDir || !isTair10) {
+    if (!annotationDir || !selectedSpeciesId) {
       setReference(null);
       return () => { cancelled = true; };
     }
 
-    void inspectTair10Reference(annotationDir)
+    void inspectGenomeReference(annotationDir, selectedSpeciesId)
       .then((state) => {
         if (!cancelled) setReference(state);
       })
@@ -114,14 +114,14 @@ export function GenomeBrowserModule() {
       });
 
     return () => { cancelled = true; };
-  }, [annotationDir, isTair10]);
+  }, [annotationDir, selectedSpeciesId]);
 
   async function runMapping() {
     addLog("command", "[Genome Browser] Refresh requested.");
     if (isRunning || isMapping) return;
-    if (!isTair10) {
-      setError("Genome Browser 第一版仅支持 Arabidopsis thaliana (TAIR10)。");
-      addLog("error", "[Genome Browser] TAIR10 is not selected.");
+    if (!selectedSpeciesId) {
+      setError("Please select a supported species before running Genome Browser.");
+      addLog("error", "[Genome Browser] No species is selected.");
       return;
     }
     if (!annotationValidation?.isValid || !annotationDir || !bedPath) {
@@ -138,20 +138,21 @@ export function GenomeBrowserModule() {
     setMappingCachePath("");
     setMappingGffPath("");
     setError("");
-    addLog("command", `[Genome Browser] Starting TAIR10 transcript mapping for ${bedPath.split(/[/\\]/).pop()}.`);
+    addLog("command", `[Genome Browser] Starting ${selectedSpeciesId} transcript mapping for ${bedPath.split(/[/\\]/).pop()}.`);
 
     try {
-      const state = await inspectTair10Reference(annotationDir);
+      const state = await inspectGenomeReference(annotationDir, selectedSpeciesId);
       setReference(state);
       if (state.missing.length) {
-        throw new Error(`TAIR10 注释目录缺少：${state.missing.join(", ")}`);
+        throw new Error(`Reference directory is missing: ${state.missing.join(", ")}`);
       }
 
       const runId = `genome-browser-${Date.now()}`;
       const requestPath = await resolveSessionCachePath(await join("genome-browser", `${runId}.request.json`));
       const responsePath = await resolveSessionCachePath(await join("genome-browser", `${runId}.response.json`));
       const stagedBedPath = await resolveSessionCachePath(await join("genome-browser", `${runId}.bed`));
-      const stagedGffPath = await resolveSessionCachePath(await join("genome-browser", `${runId}.gff3.gz`));
+      const annotationSuffix = state.files.gff3.toLowerCase().endsWith(".gz") ? ".annotation.gz" : ".annotation.gtf";
+      const stagedGffPath = await resolveSessionCachePath(await join("genome-browser", `${runId}${annotationSuffix}`));
       const workspaceCachePath = await resolveSessionCachePath(await join("genome-browser", `${runId}.transcript-cache.rds`));
       const runnerPath = await invoke<string>("resolve_resource_path", { relativePath: "scripts/genome_browser_mapping_runner.R" });
       await writeFile(stagedBedPath, await readFile(bedPath));
@@ -191,7 +192,7 @@ export function GenomeBrowserModule() {
     setWorkspace(null);
     setError("");
     try {
-      if (!reference || reference.missing.length) throw new Error("TAIR10 reference files are not ready.");
+      if (!reference || reference.missing.length) throw new Error("Reference files are not ready.");
       const workspaceKey = [
         reference.files.gff3,
         reference.files.fasta,
