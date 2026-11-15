@@ -93,9 +93,17 @@ run_meta_plot_analysis <- function(upload_context, controls, annotation_dir, pro
     adjust = effective_controls$adjust,
     enableCI = identical(effective_controls$enableCI, "TRUE")
   )
+  if (!nrow(density_ci)) {
+    return(list(chart_payload = NULL, density_data = density_ci, has_signal = FALSE,
+      species = upload_context$species, sample_count = length(saved_files),
+      interval_count = interval_count, sampled_point_count = sampled_point_count,
+      overlap_count = overlap_count,
+      reason = "Fewer than two valid sampled positions for density estimation"))
+  }
 
   meta_plot_progress_update(progress, 100, "Building chart payload and finalizing plot output")
   list(
+    density_data = density_ci,
     chart_payload = meta_plot_build_chart_payload(
       density_ci = density_ci,
       component_width = guitar_txdb[[tx_type]]$componentWidthAverage_pct,

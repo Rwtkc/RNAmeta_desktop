@@ -15,8 +15,10 @@
 meta_plot_generate_density_ci <- function(relative_points, point_weight, adjust, enableCI, CI_ResamplingTime = 1000, CI_interval = c(0.025, 0.975)) {
   density_dataframe <- data.frame()
   for (group_name in names(relative_points)) {
-    point_weight[[group_name]] <- stats::na.omit(point_weight[[group_name]])
-    relative_points[[group_name]] <- stats::na.omit(relative_points[[group_name]])
+    valid <- is.finite(point_weight[[group_name]]) & point_weight[[group_name]] > 0 & is.finite(relative_points[[group_name]])
+    point_weight[[group_name]] <- point_weight[[group_name]][valid]
+    relative_points[[group_name]] <- relative_points[[group_name]][valid]
+    if (length(relative_points[[group_name]]) < 2L) next
     site_weight <- point_weight[[group_name]] / sum(point_weight[[group_name]])
     site_id <- relative_points[[group_name]]
     fit <- suppressWarnings(stats::density(site_id, adjust = adjust, from = 0, to = 1, n = 256, weight = site_weight))

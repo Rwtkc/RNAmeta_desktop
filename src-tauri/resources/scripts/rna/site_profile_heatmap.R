@@ -1,19 +1,12 @@
 site_profile_prepare_heatmap_matrix <- function(tag_matrix) {
-  if (is.null(tag_matrix) || !length(tag_matrix) || !nrow(tag_matrix)) {
-    return(matrix(0, nrow = 100, ncol = 201))
-  }
+  if (is.null(tag_matrix)) return(matrix(numeric(), nrow = 0, ncol = 0))
+  if (!nrow(tag_matrix)) return(tag_matrix)
 
   row_order <- order(rowSums(tag_matrix))
   tag_matrix <- tag_matrix[row_order, , drop = FALSE]
   non_zero_rows <- rowSums(tag_matrix) > 0
 
-  if (sum(non_zero_rows) <= 1) {
-    row_count <- min(nrow(tag_matrix), 1000)
-    tag_matrix <- tag_matrix[seq_len(row_count), , drop = FALSE]
-    tag_matrix[1, 1] <- 0.5
-  } else {
-    tag_matrix <- tag_matrix[non_zero_rows, , drop = FALSE]
-  }
+  tag_matrix <- tag_matrix[non_zero_rows, , drop = FALSE]
 
   tag_matrix
 }
@@ -58,8 +51,7 @@ site_profile_expand_color_matrix <- function(color_matrix, scale_x = 1L, scale_y
 site_profile_heatmap_data_uri <- function(tag_matrix, palette = c("#420046", "#fedc00"), target_rows = NULL, render_scale = 1L) {
   matrix_data <- site_profile_prepare_heatmap_matrix(tag_matrix)
   matrix_data <- site_profile_reduce_heatmap_rows(matrix_data, target_rows = target_rows)
-  value_range <- range(matrix_data, finite = TRUE)
-  max_value <- value_range[[2]]
+  max_value <- if (length(matrix_data)) max(matrix_data) else 1
 
   if (!is.finite(max_value) || max_value <= 0) {
     max_value <- 1
@@ -69,6 +61,8 @@ site_profile_heatmap_data_uri <- function(tag_matrix, palette = c("#420046", "#f
   color_map <- grDevices::colorRampPalette(c("white", palette))(256)
   color_index <- pmax(1L, pmin(256L, floor(scaled_values * 255) + 1L))
   color_matrix <- matrix(color_map[color_index], nrow = nrow(matrix_data), ncol = ncol(matrix_data))
+  # A blank PNG is only a transport fallback; the payload retains zero real rows.
+  if (!nrow(color_matrix) || !ncol(color_matrix)) color_matrix <- matrix("white", 1, 1)
   color_matrix <- site_profile_expand_color_matrix(color_matrix, scale_x = render_scale, scale_y = render_scale)
 
   rgb_matrix <- grDevices::col2rgb(color_matrix, alpha = TRUE) / 255
@@ -104,9 +98,14 @@ site_profile_heatmap_title_with_source <- function(title, source_name = NULL) {
 }
 
 site_profile_heatmap_panel <- function(title, tag_matrix, x_positions, sample_name, original_name, display_options = NULL) {
+  if (is.null(tag_matrix) || (!nrow(tag_matrix) && !ncol(tag_matrix))) {
+    tag_matrix <- matrix(numeric(), 0L, length(x_positions))
+  }
+  if (ncol(tag_matrix) != length(x_positions)) stop("Heatmap columns must match the position axis.")
   display_options <- if (is.null(display_options)) list() else display_options
   display_height_px <- if (!is.null(display_options$heightPx)) display_options$heightPx else NULL
   row_height_px <- if (!is.null(display_options$rowHeightPx)) display_options$rowHeightPx else NULL
+  display_width_ratio <- if (!is.null(display_options$widthRatio)) display_options$widthRatio else NULL
   corner_radius_px <- if (!is.null(display_options$cornerRadiusPx)) display_options$cornerRadiusPx else NULL
   background_color <- if (!is.null(display_options$backgroundColor)) display_options$backgroundColor else NULL
   display_row_target <- if (!is.null(display_options$displayRowTarget)) display_options$displayRowTarget else NULL
@@ -123,14 +122,28 @@ site_profile_heatmap_panel <- function(title, tag_matrix, x_positions, sample_na
     sampleName = sample_name,
     originalName = original_name,
     rows = encoded$rows,
+    empty = encoded$rows == 0L,
+    sourceRows = if (is.null(tag_matrix)) 0L else nrow(tag_matrix),
+    signalRows = if (is.null(tag_matrix)) 0L else sum(rowSums(tag_matrix) > 0),
+    rowAggregation = if (encoded$rows < sum(rowSums(tag_matrix) > 0)) "maximum" else "none",
+    signalDefinition = display_options$signalDefinition,
+    colorNormalization = "per-panel",
     columns = encoded$columns,
     matrixValues = encoded$matrix_values,
     xDomain = c(min(x_positions), max(x_positions)),
     imageData = encoded$image_data,
     displayHeightPx = display_height_px,
+    displayWidthRatio = display_width_ratio,
     cornerRadiusPx = corner_radius_px,
     backgroundColor = background_color,
     palette = palette,
-    colorMaxQuantile = display_options$colorMaxQuantile
+    colorMaxQuantile = display_options$colorMaxQuantile,
+    showGrid = isTRUE(display_options$showGrid),
+    pixelated = isTRUE(display_options$pixelated),
+    gridOuterStroke = display_options$gridOuterStroke,
+    gridOuterStrokeWidth = display_options$gridOuterStrokeWidth,
+    horizontalGridStroke = display_options$horizontalGridStroke,
+    verticalGridStroke = display_options$verticalGridStroke,
+    gridStrokeWidth = display_options$gridStrokeWidth
   )
 }

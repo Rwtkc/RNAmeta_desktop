@@ -3,6 +3,7 @@ translation_build_heatmap_panels <- function(source_file, species_key, transcrip
   sampled_tes <- site_profile_evenly_sample_windows(windows$tes_windows, sample_n = 4000)
   tss_display_options <- list(
     rowHeightPx = 6.5,
+    signalDefinition = "BED interval centres mapped to transcript coordinates (1 nt)",
     widthRatio = 0.84,
     cornerRadiusPx = 0,
     displayRowTarget = 192,
@@ -26,7 +27,7 @@ translation_build_heatmap_panels <- function(source_file, species_key, transcrip
     "width_ratio", tss_display_options$widthRatio
   )
 
-  site_profile_cached_heatmap_panels("translation-centered", source_file, species_key, 100, function() {
+  site_profile_cached_heatmap_panels("translation-centered-v2", source_file, species_key, windows$flank_size, function() {
     tss_matrix <- site_profile_score_matrix_rna(transcript_heatmap_peaks, sampled_tss)
     tes_matrix <- site_profile_score_matrix_rna(transcript_heatmap_peaks, sampled_tes)
 
@@ -107,9 +108,9 @@ run_translation_analysis <- function(upload_context, controls = translation_defa
       windows = windows$tss_windows,
       sample_name = sample_name,
       feature_label = "Translation_start_site",
-      rel_offset = controls$flank_size,
-      x_min = -controls$flank_size,
-      x_max = controls$flank_size,
+      rel_offset = windows$rel_offset,
+      x_min = windows$x_domain[[1]],
+      x_max = windows$x_domain[[2]],
       flank_size = controls$flank_size
     )
     density_hits[[index * 2]] <- site_profile_collect_boundary_hits(
@@ -117,9 +118,9 @@ run_translation_analysis <- function(upload_context, controls = translation_defa
       windows = windows$tes_windows,
       sample_name = sample_name,
       feature_label = "Translation_end_site",
-      rel_offset = controls$flank_size,
-      x_min = -controls$flank_size,
-      x_max = controls$flank_size,
+      rel_offset = windows$rel_offset,
+      x_min = windows$x_domain[[1]],
+      x_max = windows$x_domain[[2]],
       flank_size = controls$flank_size
     )
 
@@ -151,15 +152,15 @@ run_translation_analysis <- function(upload_context, controls = translation_defa
   density_hits <- data.table::rbindlist(density_hits, use.names = TRUE, fill = TRUE)
   density_data <- site_profile_density_points(
     hit_table = density_hits,
-    x_min = -controls$flank_size,
-    x_max = controls$flank_size,
+    x_min = windows$x_domain[[1]],
+    x_max = windows$x_domain[[2]],
     feature_order = names(translation_panel_titles())
   )
 
   translation_progress_update(progress, 100, "Building chart payload and finalizing results")
 
   list(
-    chart_payload = translation_build_chart_payload(density_data, heatmap_panels, sample_metadata),
+    chart_payload = translation_build_chart_payload(density_data, heatmap_panels, sample_metadata, windows$x_domain),
     density_hits = density_hits,
     density_data = density_data,
     heatmap_panels = heatmap_panels,

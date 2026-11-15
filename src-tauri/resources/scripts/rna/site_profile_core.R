@@ -95,16 +95,15 @@ site_profile_collect_boundary_hits <- function(query_ranges, windows, sample_nam
 
 site_profile_prepare_transcription_windows <- function(species_key, txdb_features, txlens, flank_size = 1000) {
   site_profile_cached_boundary_windows("transcription", species_key, flank_size, function() {
-    if (identical(species_key, "sce_R64")) {
-      feature_tss <- BiocGenerics::unlist(txdb_features$fiveUTRs)
-      feature_tes <- BiocGenerics::unlist(txdb_features$threeUTRs)
-    } else {
-      feature_tss <- BiocGenerics::unlist(txdb_features$cds)
-      feature_tes <- BiocGenerics::unlist(txdb_features$cds)
+    # One true transcript span per isoform, including its UTRs.
+    transcripts <- BiocGenerics::unlist(range(txdb_features$exons))
+    boundary_window <- function(fix) {
+      anchor <- GenomicRanges::resize(transcripts, width = 1, fix = fix)
+      symmetric <- GenomicRanges::resize(anchor, width = 2 * flank_size + 1, fix = "center")
+      GenomicRanges::resize(symmetric, width = 2 * flank_size, fix = "start")
     }
-
-    coverage_tss <- GenomicRanges::flank(feature_tss, width = flank_size, start = TRUE, both = TRUE)
-    coverage_tes <- GenomicRanges::flank(feature_tes, width = flank_size, start = FALSE, both = TRUE)
+    coverage_tss <- boundary_window("start")
+    coverage_tes <- boundary_window("end")
     tx_names <- unique(as.character(data.table::as.data.table(txlens)$tx_name))
     heatmap_tss <- coverage_tss[names(coverage_tss) %in% tx_names]
     heatmap_tes <- coverage_tes[names(coverage_tes) %in% tx_names]
@@ -114,8 +113,10 @@ site_profile_prepare_transcription_windows <- function(species_key, txdb_feature
       coverage_tes = coverage_tes,
       heatmap_tss = heatmap_tss,
       heatmap_tes = heatmap_tes,
-      x_positions = seq(-flank_size + 1, flank_size),
-      x_domain = c(-flank_size, flank_size - 1)
+      x_positions = seq(-flank_size, flank_size - 1),
+      x_domain = c(-flank_size, flank_size - 1),
+      rel_offset = flank_size + 1L,
+      flank_size = flank_size
     )
   })
 }
@@ -124,7 +125,11 @@ site_profile_prepare_translation_windows <- function(species_key, txlens, exons,
   site_profile_cached_boundary_windows("translation", species_key, flank_size, function() {
     txlens_dt <- data.table::as.data.table(txlens)
 
-    if (identical(species_key, "sce_R64")) {
+    use_cds_only <- identical(species_key, "sce_R64") && !any(
+      txlens_dt$utr5_len > flank_size & txlens_dt$utr3_len > flank_size &
+        txlens_dt$cds_len > flank_size, na.rm = TRUE
+    )
+    if (use_cds_only) {
       usable <- txlens_dt[cds_len > flank_size, .(tx_name, utr5_len, cds_len, utr3_len)]
       tss_ranges <- usable[, .(
         seqnames = tx_name,
@@ -155,7 +160,7 @@ site_profile_prepare_translation_windows <- function(species_key, txlens, exons,
         strand = "*"
       )]
       x_domain <- c(-flank_size, flank_size)
-      x_positions <- seq(-flank_size + 1, flank_size + 1)
+      x_positions <- seq(-flank_size, flank_size)
     }
 
     tss_windows <- GenomicRanges::makeGRangesFromDataFrame(tss_ranges, keep.extra.columns = TRUE)
@@ -169,7 +174,9 @@ site_profile_prepare_translation_windows <- function(species_key, txlens, exons,
       tss_windows = tss_windows,
       tes_windows = tes_windows,
       x_positions = x_positions,
-      x_domain = x_domain
+      x_domain = x_domain,
+      rel_offset = if (use_cds_only) 0L else flank_size + 1L,
+      flank_size = flank_size
     )
   })
 }
@@ -183,8 +190,8 @@ site_profile_prepare_splicesite_windows <- function(species_key, exons_by_tx, fl
     ss5p <- GenomicRanges::GRanges(
       seqnames = GenomeInfoDb::seqnames(exons_flat),
       ranges = IRanges::IRanges(
-        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::end(exons_flat) + 1, BiocGenerics::start(exons_flat) - 1),
-        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::end(exons_flat) + 1, BiocGenerics::start(exons_flat) - 1)
+        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::end(exons_flat), BiocGenerics::start(exons_flat)),
+        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::end(exons_flat), BiocGenerics::start(exons_flat))
       ),
       strand = GenomicRanges::strand(exons_flat)
     )
@@ -193,8 +200,8 @@ site_profile_prepare_splicesite_windows <- function(species_key, exons_by_tx, fl
     ss3p <- GenomicRanges::GRanges(
       seqnames = GenomeInfoDb::seqnames(exons_flat),
       ranges = IRanges::IRanges(
-        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::start(exons_flat) - 1, BiocGenerics::end(exons_flat) + 1),
-        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::start(exons_flat) - 1, BiocGenerics::end(exons_flat) + 1)
+        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::start(exons_flat), BiocGenerics::end(exons_flat)),
+        ifelse(as.character(GenomicRanges::strand(exons_flat)) == "+", BiocGenerics::start(exons_flat), BiocGenerics::end(exons_flat))
       ),
       strand = GenomicRanges::strand(exons_flat)
     )
@@ -203,8 +210,8 @@ site_profile_prepare_splicesite_windows <- function(species_key, exons_by_tx, fl
     transcript5p <- GenomicRanges::GRanges(
       seqnames = GenomeInfoDb::seqnames(transcript_ranges),
       ranges = IRanges::IRanges(
-        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::end(transcript_ranges) + 1, BiocGenerics::start(transcript_ranges) - 1),
-        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::end(transcript_ranges) + 1, BiocGenerics::start(transcript_ranges) - 1)
+        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::end(transcript_ranges), BiocGenerics::start(transcript_ranges)),
+        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::end(transcript_ranges), BiocGenerics::start(transcript_ranges))
       ),
       strand = GenomicRanges::strand(transcript_ranges)
     )
@@ -212,29 +219,31 @@ site_profile_prepare_splicesite_windows <- function(species_key, exons_by_tx, fl
     transcript3p <- GenomicRanges::GRanges(
       seqnames = GenomeInfoDb::seqnames(transcript_ranges),
       ranges = IRanges::IRanges(
-        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::start(transcript_ranges) - 1, BiocGenerics::end(transcript_ranges) + 1),
-        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::start(transcript_ranges) - 1, BiocGenerics::end(transcript_ranges) + 1)
+        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::start(transcript_ranges), BiocGenerics::end(transcript_ranges)),
+        ifelse(as.character(GenomicRanges::strand(transcript_ranges)) == "+", BiocGenerics::start(transcript_ranges), BiocGenerics::end(transcript_ranges))
       ),
       strand = GenomicRanges::strand(transcript_ranges)
     )
 
-    ss5p <- ss5p[-S4Vectors::queryHits(GenomicRanges::findOverlaps(ss5p, transcript5p))]
-    ss3p <- ss3p[-S4Vectors::queryHits(GenomicRanges::findOverlaps(ss3p, transcript3p))]
+    ss5p <- ss5p[setdiff(seq_along(ss5p), unique(S4Vectors::queryHits(GenomicRanges::findOverlaps(ss5p, transcript5p))))]
+    ss3p <- ss3p[setdiff(seq_along(ss3p), unique(S4Vectors::queryHits(GenomicRanges::findOverlaps(ss3p, transcript3p))))]
 
     windows_5p <- GenomicRanges::resize(
-      GenomicRanges::flank(ss5p, width = flank_size, start = TRUE, both = FALSE),
-      width = flank_size * 2,
+      GenomicRanges::resize(ss5p, width = flank_size * 2 + 1L, fix = "center"),
+      width = flank_size * 3 + 1L,
       fix = "start"
     )
     windows_3p <- GenomicRanges::resize(
-      GenomicRanges::flank(ss3p, width = 2 * flank_size, start = TRUE, both = FALSE),
-      width = flank_size * 3,
+      GenomicRanges::resize(ss3p, width = flank_size * 4 + 1L, fix = "center"),
+      width = flank_size * 3 + 1L,
       fix = "start"
     )
 
     list(
       windows_5p = windows_5p,
-      windows_3p = windows_3p
+      windows_3p = windows_3p,
+      offset_5p = flank_size + 1L,
+      offset_3p = flank_size * 2 + 1L
     )
   })
 }
@@ -259,67 +268,32 @@ site_profile_evenly_sample_windows <- function(windows, sample_n = 10000) {
 }
 
 site_profile_score_matrix_rna <- function(target, windows) {
-  window_seqlengths <- GenomeInfoDb::seqlengths(windows)
-  inferred_seqlengths <- window_seqlengths
-
-  if (!length(inferred_seqlengths)) {
-    inferred_seqlengths <- numeric()
-  }
-
-  missing_seqlevels <- names(inferred_seqlengths)[is.na(inferred_seqlengths)]
-  if (length(missing_seqlevels)) {
-    window_dt <- data.table::data.table(
-      seqname = as.character(GenomeInfoDb::seqnames(windows)),
-      end = BiocGenerics::end(windows)
-    )
-    inferred_max_end <- window_dt[
-      seqname %in% missing_seqlevels,
-      .(seqlength = max(end, na.rm = TRUE)),
-      by = seqname
-    ]
-
-    if (nrow(inferred_max_end)) {
-      inferred_seqlengths[inferred_max_end$seqname] <- inferred_max_end$seqlength
-    }
-  }
-
-  if (length(inferred_seqlengths)) {
-    common_seqlevels <- intersect(GenomeInfoDb::seqlevels(target), names(inferred_seqlengths))
-    valid_seqlevels <- common_seqlevels[!is.na(inferred_seqlengths[common_seqlevels])]
-
-    if (length(valid_seqlevels)) {
-      target_seqinfo <- GenomeInfoDb::seqinfo(target)
-      GenomeInfoDb::seqlengths(target_seqinfo)[valid_seqlevels] <- inferred_seqlengths[valid_seqlevels]
-      GenomeInfoDb::seqinfo(target) <- target_seqinfo
-    }
-  }
-
+  widths <- unique(IRanges::width(windows))
+  if (length(widths) > 1L) stop("Heatmap windows must have equal widths.")
+  ncols <- if (length(widths)) widths[[1]] else 0L
+  if (!length(windows)) return(matrix(numeric(), 0L, ncols))
+  chromosomes <- as.character(GenomeInfoDb::seqnames(windows))
+  limits <- GenomeInfoDb::seqlengths(windows)[chromosomes]
+  valid <- IRanges::start(windows) >= 1L & (is.na(limits) | IRanges::end(windows) <= limits)
+  windows <- windows[valid]
+  chromosomes <- chromosomes[valid]
+  result <- matrix(0, nrow = length(windows), ncol = ncols)
+  if (!length(windows) || !length(target)) return(result)
+  # Pad coverage to the full annotation window; never shrink its coordinate axis.
+  coverage_widths <- tapply(IRanges::end(windows), chromosomes, max)
+  target_levels <- GenomeInfoDb::seqlevels(target)
+  coverage_widths <- coverage_widths[intersect(names(coverage_widths), target_levels)]
+  target <- GenomeInfoDb::keepSeqlevels(target, names(coverage_widths), pruning.mode = "coarse")
   target_rle <- GenomicRanges::coverage(target)
-
-  if (length(unique(IRanges::width(windows))) > 1) {
-    stop("width of 'windows' are not equal, provide 'windows' with equal widths")
+  for (chromosome in names(coverage_widths)) {
+    indices <- which(chromosomes == chromosome)
+    signal <- target_rle[[chromosome]]
+    required <- coverage_widths[[chromosome]]
+    if (length(signal) < required) signal <- c(signal, S4Vectors::Rle(0, required - length(signal)))
+    views <- IRanges::Views(signal, start = IRanges::start(windows)[indices], end = IRanges::end(windows)[indices])
+    result[indices, ] <- t(IRanges::viewApply(views, as.vector))
   }
-
-  windows_len <- length(windows)
-  windows <- genomation::constrainRanges(target_rle, windows)
-  if (length(windows) != windows_len) {
-    warning(sprintf("%d windows fall off the target", windows_len - length(windows)))
-  }
-
-  chroms <- sort(intersect(names(target_rle), as.character(unique(GenomeInfoDb::seqnames(windows)))))
-  views <- IRanges::Views(target_rle[chroms], as(windows, "IntegerRangesList")[chroms])
-  matrix_list <- lapply(views, function(view_set) t(IRanges::viewApply(view_set, as.vector)))
-  score_matrix <- do.call("rbind", matrix_list)
-
-  if (!is.null(S4Vectors::mcols(windows)[, "X_rank", drop = TRUE])) {
-    ranks <- unlist(split(S4Vectors::mcols(windows)[, "X_rank"], as.vector(GenomeInfoDb::seqnames(windows))))
-    rownames(score_matrix) <- ranks
-    minus_rows <- windows[GenomicRanges::strand(windows) == "-"]$X_rank
-    if (length(minus_rows)) {
-      score_matrix[rownames(score_matrix) %in% minus_rows, ] <- score_matrix[rownames(score_matrix) %in% minus_rows, ncol(score_matrix):1]
-    }
-    score_matrix <- score_matrix[order(ranks), , drop = FALSE]
-  }
-
-  score_matrix
+  minus <- as.character(GenomicRanges::strand(windows)) == "-"
+  if (any(minus)) result[minus, ] <- result[minus, ncols:1L, drop = FALSE]
+  result
 }

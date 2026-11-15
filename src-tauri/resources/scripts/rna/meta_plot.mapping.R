@@ -80,6 +80,7 @@ meta_plot_sample_points <- function(site_group, controls, guitar_txdb, source_fi
 }
 
 meta_plot_normalize <- function(points, guitar_txdb, controls) {
+  if (!length(points)) return(list(position = numeric(), weight = numeric()))
   tx_type <- controls$pltTxType
   points_pos_tx <- end(points)
   names(points_pos_tx) <- as.character(GenomicRanges::seqnames(points))

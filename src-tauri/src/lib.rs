@@ -131,6 +131,7 @@ fn build_analysis_cache_key(
     controls_json: String,
 ) -> Result<String, String> {
     let mut hasher = Sha256::new();
+    hasher.update(b"rnameta-online-algorithms-20261115-v1\n");
     hasher.update(module_name.as_bytes());
     hasher.update(b"\n");
     hasher.update(annotation_dir.as_bytes());

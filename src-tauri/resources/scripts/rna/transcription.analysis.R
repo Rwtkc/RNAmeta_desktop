@@ -4,6 +4,7 @@ transcription_build_heatmap_panels <- function(source_file, species_key, peaks, 
   heatmap_targets <- site_profile_heatmap_peaks(peaks)
   tss_display_options <- list(
     rowHeightPx = 0.9,
+    signalDefinition = "Coverage of a 15-nt window centred on each BED interval",
     cornerRadiusPx = 0,
     displayRowTarget = 384,
     renderScale = 6,
@@ -20,7 +21,7 @@ transcription_build_heatmap_panels <- function(source_file, species_key, peaks, 
     "color_quantile", tss_display_options$colorMaxQuantile
   )
 
-  site_profile_cached_heatmap_panels("transcription", source_file, species_key, 1000, function() {
+  site_profile_cached_heatmap_panels("transcription-transcript-boundaries-v2", source_file, species_key, windows$flank_size, function() {
     tss_matrix <- site_profile_score_matrix_rna(heatmap_targets, sampled_tss)
     tes_matrix <- site_profile_score_matrix_rna(heatmap_targets, sampled_tes)
 
@@ -98,7 +99,7 @@ run_transcription_analysis <- function(upload_context, controls = transcription_
       windows = windows$coverage_tss,
       sample_name = sample_name,
       feature_label = "Transcription_start_site",
-      rel_offset = controls$flank_size,
+      rel_offset = windows$rel_offset,
       x_min = -controls$flank_size,
       x_max = controls$flank_size - 1,
       flank_size = controls$flank_size
@@ -108,7 +109,7 @@ run_transcription_analysis <- function(upload_context, controls = transcription_
       windows = windows$coverage_tes,
       sample_name = sample_name,
       feature_label = "Transcription_end_site",
-      rel_offset = controls$flank_size,
+      rel_offset = windows$rel_offset,
       x_min = -controls$flank_size,
       x_max = controls$flank_size - 1,
       flank_size = controls$flank_size
@@ -144,7 +145,7 @@ run_transcription_analysis <- function(upload_context, controls = transcription_
   transcription_progress_update(progress, 100, "Building chart payload and finalizing results")
 
   list(
-    chart_payload = if (has_signal) transcription_build_chart_payload(density_data, heatmap_panels, sample_metadata) else NULL,
+    chart_payload = if (has_signal || has_heatmap_signal) transcription_build_chart_payload(density_data, heatmap_panels, sample_metadata, windows$x_domain) else NULL,
     density_hits = density_hits,
     density_data = density_data,
     heatmap_panels = heatmap_panels,

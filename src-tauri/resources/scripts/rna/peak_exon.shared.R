@@ -64,19 +64,13 @@ peak_exon_prepare_exon_ranges <- function(exons) {
   exon_ranges$tx_name <- names(exon_ranges)
   exon_ranges$length <- IRanges::width(exon_ranges)
 
-  tx_template <- exon_ranges[!duplicated(exon_ranges$tx_name)]
   exon_counts <- data.table::data.table(name = exon_ranges$tx_name)[, .N, by = name]
   exon_count_values <- exon_counts$N
   names(exon_count_values) <- exon_counts$name
-  exon_strands <- as.character(GenomicRanges::strand(tx_template))
 
-  exon_ranges$rank <- unlist(lapply(seq_along(exon_strands), function(index) {
-    rank_values <- seq_len(exon_count_values[[index]])
-    if (identical(exon_strands[[index]], "-")) {
-      rank_values <- rev(rank_values)
-    }
-    rank_values
-  }))
+  # exonsBy(..., by = "tx") supplies exon_rank in transcript order on both
+  # strands. Reversing negative-strand ranks would swap First and Last.
+  exon_ranges$rank <- as.integer(exon_ranges$exon_rank)
 
   exon_total <- unname(exon_count_values[as.character(exon_ranges$tx_name)])
   exon_loc <- rep("Middle", length(exon_ranges))
@@ -84,7 +78,7 @@ peak_exon_prepare_exon_ranges <- function(exons) {
   exon_loc[!is.na(exon_total) & exon_ranges$rank == exon_total] <- "Last"
 
   exon_ranges$exonLoc <- factor(exon_loc, levels = peak_exon_location_levels())
-  exon_ranges$exonID <- paste0(exon_ranges$tx_name, ":", exon_ranges$rank)
+  exon_ranges$exonID <- paste0(exon_ranges$tx_name, ":", exon_ranges$rank, recycle0 = TRUE)
   exon_ranges
 }
 
@@ -92,7 +86,9 @@ peak_exon_prepare_transcript_ranges <- function(transcripts) {
   transcript_ranges <- transcripts
 
   if (!"tx_name" %in% names(S4Vectors::mcols(transcript_ranges))) {
-    if (!is.null(names(transcript_ranges)) && any(nzchar(names(transcript_ranges)))) {
+    if ("tx_name" %in% names(S4Vectors::mcols(transcript_ranges))) {
+      transcript_ranges$tx_name <- as.character(transcript_ranges$tx_name)
+    } else if (!is.null(names(transcript_ranges)) && any(nzchar(names(transcript_ranges)))) {
       transcript_ranges$tx_name <- names(transcript_ranges)
     } else if ("tx_id" %in% names(S4Vectors::mcols(transcript_ranges))) {
       transcript_ranges$tx_name <- as.character(transcript_ranges$tx_id)
@@ -129,9 +125,7 @@ peak_exon_first_hit_subject_index <- function(peaks, feature_ranges) {
     return(integer())
   }
 
-  subject_hits <- S4Vectors::subjectHits(
-    overlaps[peak_distribution_first_hit_index(S4Vectors::queryHits(overlaps))]
-  )
+  subject_hits <- S4Vectors::subjectHits(overlaps[peak_distribution_first_hit_index(S4Vectors::queryHits(overlaps))])
   unique(subject_hits)
 }
 
@@ -168,27 +162,14 @@ peak_exon_compute_exon_size_data <- function(peaks, exon_ranges, sample_name) {
     ))
   }
 
-  exon_info <- data.table::as.data.table(
-    as.data.frame(S4Vectors::mcols(exon_ranges[subject_index]))
-  )
+  exon_info <- data.table::as.data.table(as.data.frame(S4Vectors::mcols(exon_ranges[subject_index])))
   output_columns <- intersect(
     c("exonID", "exon_id", "exon_name", "exon_rank", "tx_name", "length", "rank", "exonLoc"),
     names(exon_info)
   )
-  exon_info <- exon_info[, ..output_columns]
-
-  if ("exonID" %in% names(exon_info)) {
-    exon_info <- unique(exon_info, by = "exonID")
-  } else if ("exon_id" %in% names(exon_info)) {
-    exon_info[, exonID := as.character(exon_id)]
-    exon_info <- unique(exon_info, by = "exonID")
-  } else {
-    exon_info[, exonID := paste0(tx_name, ":", rank)]
-    exon_info <- unique(exon_info, by = "exonID")
-  }
-
+  exon_info <- unique(exon_info[, ..output_columns], by = "exonID")
   exon_info[, Sample := sample_name]
-  exon_info[, exonLoc := factor(as.character(exonLoc), levels = peak_exon_location_levels())]
+  exon_info[, exonLoc := factor(exonLoc, levels = peak_exon_location_levels())]
   exon_info[order(Sample, exonLoc, rank)]
 }
 

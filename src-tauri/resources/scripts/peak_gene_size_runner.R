@@ -26,7 +26,7 @@ peak_gene_size_progress_update <- function(progress, value, detail) {
 
 write_result <- function(payload) {
   writeLines(
-    jsonlite::toJSON(payload, auto_unbox = TRUE, null = "null", pretty = TRUE),
+    jsonlite::toJSON(payload, auto_unbox = TRUE, null = "null", pretty = TRUE, digits = 16),
     response_path,
     useBytes = TRUE
   )
@@ -73,3 +73,5 @@ tryCatch(
     quit(status = 1)
   }
 )
+
+quit(save = "no", status = 0L, runLast = FALSE)

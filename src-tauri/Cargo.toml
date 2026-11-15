@@ -1,6 +1,6 @@
 [package]
 name = "rnameta_windows"
-version = "1.0.0"
+version = "1.0.1"
 description = "RNAmeta Windows desktop client"
 authors = ["Codex", "User"]
 edition = "2021"

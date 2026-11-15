@@ -1,6 +1,10 @@
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 2) stop("Usage: genome_browser_workspace_runner.R request.json response.json")
 req <- jsonlite::fromJSON(args[[1]])
+script <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE)[[1L]])
+for (name in c("browser.mapping.R", "browser.annotation.R")) {
+  source(file.path(dirname(normalizePath(script)), "rna", name), encoding = "UTF-8")
+}
 out_path <- args[[2]]
 write_result <- function(value) jsonlite::write_json(value, out_path, auto_unbox = TRUE, dataframe = "rows", na = "null")
 fail <- function(message) { write_result(list(status = "error", message = message)); quit(save = "no", status = 0) }
@@ -10,29 +14,6 @@ if (!requireNamespace("data.table", quietly = TRUE)) fail("R package data.table 
 required <- c("gffPath", "fastaPath", "transcriptId", "interval", "outputBase")
 if (!all(required %in% names(req))) fail("Transcript workspace request is incomplete.")
 if (!file.exists(req$gffPath) || !file.exists(req$fastaPath)) fail("Annotation or FASTA file is missing.")
-read_gff <- function(path) {
-  connection <- if (grepl("\\.gz$", path, ignore.case = TRUE)) gzfile(path) else file(path)
-  on.exit(close(connection), add = TRUE)
-  lines <- readLines(connection, warn = FALSE)
-  lines <- lines[nzchar(lines) & !startsWith(lines, "#")]
-  if (!length(lines)) return(data.table::data.table())
-  x <- data.table::fread(text = paste(lines, collapse = "\n"), sep = "\t", header = FALSE, quote = "", fill = TRUE, data.table = TRUE)
-  data.table::setnames(x, c("seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"))
-  x[, `:=`(start = as.integer(start), end = as.integer(end))]
-  x
-}
-attr_value <- function(value, key) {
-  gff_hit <- regmatches(value, regexec(paste0("(?:^|;)\\s*", key, "=([^;]+)"), value, perl = TRUE))
-  gff_value <- vapply(gff_hit, function(m) if (length(m) > 1) m[[2]] else "", character(1))
-  gtf_hit <- regmatches(value, regexec(paste0('(?:^|;)\\s*', key, '\\s+"([^\"]+)"'), value, perl = TRUE))
-  gtf_value <- vapply(gtf_hit, function(m) if (length(m) > 1) m[[2]] else "", character(1))
-  ifelse(nzchar(gff_value), gff_value, gtf_value)
-}
-transcript_attr <- function(value) {
-  parent <- attr_value(value, "Parent")
-  transcript_id <- attr_value(value, "transcript_id")
-  ifelse(nzchar(parent), parent, transcript_id)
-}
 canonical <- function(value) sub("^chr", "", sub("^Chr", "", as.character(value)))
 reverse_complement <- function(value) chartr("ACGTNacgtn", "TGCANtgcan", paste(rev(strsplit(value, "", fixed = TRUE)[[1]]), collapse = ""))
 fasta_cache <- new.env(parent = emptyenv())
@@ -99,21 +80,10 @@ if (!is.null(cached_annotation) && is.data.frame(cached_annotation$exons)) {
   cds <- data.table::as.data.table(if (is.null(cached_annotation$cds)) data.frame() else cached_annotation$cds)
   if (nrow(cds) && "transcript_id" %in% names(cds)) cds <- cds[transcript_id == tx_id]
 } else {
-  gff <- read_gff(req$gffPath)
-  if (!nrow(gff)) fail("Annotation contains no records.")
-  gff[, seqid := canonical(seqid)]
-  ex <- gff[type == "exon"]
-  ex[, transcript_id := sub("^transcript:", "", transcript_attr(attributes))]
-  ex[, exon_width := end - start + 1L]
-  ex[, sort_start := ifelse(strand == "-", -start, start)]
-  data.table::setorder(ex, transcript_id, sort_start)
-  ex[, cumulative_before := cumsum(data.table::shift(exon_width, fill = 0L)), by = transcript_id]
-  ex[, transcript_length := sum(exon_width), by = transcript_id]
-  cds <- gff[type == "CDS"]
-  if (nrow(cds)) {
-    cds[, transcript_id := sub("^transcript:", "", transcript_attr(attributes))]
-  }
-  cds <- cds[transcript_id == tx_id]
+  annotation <- browser_local_annotation(req$gffPath)
+  ex <- annotation$exons[transcript_id == tx_id]
+  cds <- annotation$cds
+  if (nrow(cds)) cds <- cds[transcript_id == tx_id]
 }
 if (!nrow(ex)) fail(sprintf("Transcript '%s' was not found in the annotation.", tx_id))
 progress(42, "Preparing ordered transcript exon structure")

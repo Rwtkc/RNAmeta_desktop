@@ -81,3 +81,5 @@ tryCatch(
     quit(status = 1)
   }
 )
+
+quit(save = "no", status = 0L, runLast = FALSE)

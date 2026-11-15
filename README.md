@@ -2,9 +2,11 @@
 
 RNAmeta Desktop is a local Windows desktop client for RNAmeta analysis.
 
-## Version 1.0.0
+## Version 1.0.1
 
-This is the first major desktop release. The application provides local RNA analysis workflows, including Upload / Run, Genome Browser, Structure, Meta Plot, gene and exon statistics, and site-profile analysis.
+The application provides local RNA analysis workflows, including Upload / Run, Genome Browser, Structure, Meta Plot, gene and exon statistics, and site-profile analysis.
+
+Version 1.0.1 synchronizes the 11 shared analysis modules with RNAmeta Online and updates transcript mapping in Genome Browser. Translation profiles use symmetric windows with the updated yeast sce_R64 UTR annotation and retain compatibility with older CDS-only references. Analysis cache identifiers have been refreshed for the updated implementation.
 
 The desktop client runs its bundled R runtime and RNAfold runtime locally. It does not require an internet connection for analysis.
 
@@ -14,9 +16,9 @@ Online RNAmeta workspace: [https://rnainformatics.cn/RNAmeta-online/](https://rn
 
 ## Downloads
 
-Download the latest Windows packages from the [v1.0.0 Release](https://github.com/Rwtkc/RNAmeta_desktop/releases/tag/v1.0.0):
+Download the latest Windows application from the [v1.0.1 Release](https://github.com/Rwtkc/RNAmeta_desktop/releases/tag/v1.0.1):
 
-- [RNAmeta-desktop-portable-v1.0.0-2026-09-21.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.0/RNAmeta-desktop-portable-v1.0.0-2026-09-21.zip) — complete portable Windows application.
+- [RNAmeta-desktop-portable-v1.0.1-2026-11-15.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.1/RNAmeta-desktop-portable-v1.0.1-2026-11-15.zip) — complete portable Windows application.
 - [RNAmeta-Arabidopsis-TAIR10-test-data-v1.0.0-2026-09-21.zip](https://github.com/Rwtkc/RNAmeta_desktop/releases/download/v1.0.0/RNAmeta-Arabidopsis-TAIR10-test-data-v1.0.0-2026-09-21.zip) — TAIR10 annotation, Genome Browser / Structure reference tracks, and example BED files.
 
 Extract the portable application ZIP and keep the `resources` directory next to `RNAmeta.exe`.

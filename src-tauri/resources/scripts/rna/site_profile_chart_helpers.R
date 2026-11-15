@@ -100,3 +100,57 @@ site_profile_legend_entries <- function(sample_metadata) {
     )
   })
 }
+
+site_profile_density_export_table <- function(density_data, sample_metadata, module_name) {
+  export_data <- data.table::copy(density_data)
+
+  if (!nrow(export_data)) {
+    return(data.frame(
+      Module = character(),
+      Panel = character(),
+      Sample = character(),
+      Source_File = character(),
+      Position = numeric(),
+      Density = numeric(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  export_data[, Module := module_name]
+  export_data[, Source_File := rnameta_lookup_original_name(sample_metadata, Sample, fallback = Sample), by = Sample]
+  data.table::setcolorder(export_data, c("Module", "Panel", "Sample", "Source_File", "Position", "Density"))
+  as.data.frame(export_data)
+}
+
+site_profile_heatmap_export_table <- function(heatmap_panels, module_name) {
+  if (is.null(heatmap_panels) || !length(heatmap_panels)) {
+    return(data.frame(
+      Module = character(),
+      Panel = character(),
+      Sample = character(),
+      Source_File = character(),
+      Rows = integer(),
+      Columns = integer(),
+      X_Min = numeric(),
+      X_Max = numeric(),
+      stringsAsFactors = FALSE
+    ))
+  }
+
+  do.call(
+    rbind,
+    lapply(heatmap_panels, function(panel) {
+      data.frame(
+        Module = module_name,
+        Panel = panel$title,
+        Sample = panel$sampleName,
+        Source_File = panel$originalName,
+        Rows = panel$rows,
+        Columns = panel$columns,
+        X_Min = panel$xDomain[[1]],
+        X_Max = panel$xDomain[[2]],
+        stringsAsFactors = FALSE
+      )
+    })
+  )
+}
